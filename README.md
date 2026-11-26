@@ -6,6 +6,22 @@ AgentOrchestra is not a chat-agent swarm demo. It is a deterministic scheduler w
 
 ## One-click start
 
+### One line from GitHub (when the host CLI is installed)
+
+OpenCode — installs the plugin globally from GitHub, so it is available in every conversation of every project:
+
+```bash
+opencode plugin add 'github:ok888laity/agentorchestra#main::path:AgentOrchestra/plugin'
+```
+
+Codex — registers the repository marketplace and installs the plugin user-wide (all sessions):
+
+```bash
+codex plugin marketplace add ok888laity/agentorchestra && codex plugin add agentorchestra@agentorchestra-local
+```
+
+After either command, start a new conversation. In OpenCode run `/orchestra-models` once to classify providers and make your own billing/privacy choice.
+
 ### Auto-install for OpenCode + Codex (one script)
 
 ```bash
