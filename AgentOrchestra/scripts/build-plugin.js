@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,6 +27,7 @@ copyDir(path.join(root, "docs"), path.join(target, "docs"));
 fs.mkdirSync(path.join(target, "scripts"), { recursive: true });
 fs.copyFileSync(path.join(root, "scripts", "demo-check.js"), path.join(target, "scripts", "demo-check.js"));
 fs.copyFileSync(path.join(root, "scripts", "install.js"), path.join(target, "scripts", "install.js"));
+fs.copyFileSync(path.join(root, "gui-src", "rpc.js"), path.join(target, "server", "rpc.js"));
 fs.copyFileSync(path.join(root, "LICENSE"), path.join(target, "LICENSE"));
 
 let skill = fs.readFileSync(path.join(root, "SKILL.md"), "utf8");
@@ -222,7 +224,17 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Plugin, Skill } from "@opencode/plugin";
+import { Rpc } from "@opencode/plugin/rpc";
+import { classifyHostModels, classificationSummaryText, writeProviderPolicy } from "./server/classify.js";
+import { loadConfig } from "./server/config.js";
+import { planFromObject } from "./server/domain.js";
 import { syncHostModels } from "./server/host-models.js";
+import { planPool, poolSummaryText } from "./server/pool.js";
+import { ProviderHub } from "./server/providers/index.js";
+import { Orchestra } from "./server/rpc.js";
+import { routeTask, routePreviewText } from "./server/router.js";
+import { Scheduler } from "./server/scheduler.js";
+import { Store } from "./server/store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const launcher = path.join(here, "server", "launch-mcp.js");
@@ -366,6 +378,57 @@ export default Plugin.define({
     }
     const hostExecutor = bridge ? "host-opencode" : (ctx.options?.hostExecutor ?? "opencode");
 
+    if (ctx.rpc?.register) {
+      try {
+        const config = loadConfig(stateRoot);
+        const store = new Store(stateRoot, { project: "gui", policy: config.policyDefaults });
+        const providers = new ProviderHub({ config, models: config.models });
+        const scheduler = new Scheduler({ root: stateRoot, store, config, providers });
+        registrations.push(await ctx.rpc.register(Orchestra, {
+          status: async () => ({ text: JSON.stringify({ project: store.getState().project, progress: store.snapshot().progress }, null, 2) }),
+          classify: async () => ({ text: JSON.stringify(classifyHostModels(stateRoot)) }),
+          confirmProvider: async (input) => {
+            const policy = writeProviderPolicy(stateRoot, String(input.provider), {
+              billing: String(input.billing),
+              privacy: String(input.privacy),
+              enabled: Boolean(input.enabled)
+            });
+            return { text: "已确认 " + input.provider + "：" + policy.billing + " / " + policy.privacy };
+          },
+          examples: async () => {
+            const dir = path.join(here, "examples");
+            const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
+            return { text: files.map((file) => file + "\n" + fs.readFileSync(path.join(dir, file), "utf8")).join("\n---\n") };
+          },
+          submitPlan: async (input) => {
+            const plan = planFromObject(JSON.parse(String(input.plan)), config.policyDefaults);
+            store.installPlan(plan, { replace: true });
+            return { text: "已提交 " + plan.tasks.length + " 个任务（" + plan.project + "）" };
+          },
+          pool: async () => {
+            const state = store.getState();
+            const pool = planPool({ tasks: state.tasks, models: config.models, roles: config.roles, policy: state.policy, state });
+            return { text: poolSummaryText(pool) };
+          },
+          routePreview: async (input) => {
+            const state = store.getState();
+            const task = state.tasks[String(input.taskId)];
+            if (!task) return { text: "任务不存在：" + input.taskId };
+            if (task.humanGate) return { text: "人工验收节点，不选择模型。" };
+            if (task.kind === "script") return { text: "确定性脚本节点：" + (task.command ?? []).join(" ") };
+            const route = routeTask({ task, models: config.models, roles: config.roles, policy: state.policy, state, promptChars: String(task.brief ?? "").length + 3000 });
+            return { text: routePreviewText(route) };
+          },
+          run: async () => {
+            const result = await scheduler.run({ maxSteps: 80 });
+            return { text: "运行结束：" + result.stopReason + " · " + (result.progress ?? 0) + "% 接受" };
+          }
+        }));
+      } catch (error) {
+        console.error("[agentorchestra] RPC registration failed:", error.message);
+      }
+    }
+
     if (!ctx.mcp?.transform) throw new Error("OpenCode MCP transform API is unavailable");
     registrations.push(await ctx.mcp.transform((editor) => {
       editor.set("agentorchestra", {
@@ -492,10 +555,13 @@ write(path.join(target, "package.json"), {
   description: "OpenCode plugin for AgentOrchestra: auto-registers the local MCP server, skill and commands.",
   type: "module",
   exports: {
-    ".": "./opencode-server.js"
+    ".": "./opencode-server.js",
+    "./rpc": "./server/rpc.js",
+    "./gui-experimental": "./gui-experimental.cjs"
   },
   files: [
     "opencode-server.js",
+    "gui-experimental.cjs",
     "server",
     "config",
     "examples",
@@ -570,6 +636,20 @@ The demo is simulated; it proves orchestration only. Real engineering evidence r
 - \`plugin.json\`, \`.codex-plugin/plugin.json\` — Codex manifests.
 - \`mcp.json\`, \`.mcp.json\` — portable and compatibility MCP config.
 `);
+
+const guiBuild = spawnSync(process.execPath, ["node_modules/vite/bin/vite.js", "build"], {
+  cwd: root,
+  encoding: "utf8",
+  windowsHide: true,
+  timeout: 180000
+});
+const guiCandidates = [path.join(root, "dist", "gui-experimental.cjs"), path.join(root, "gui-experimental.cjs")];
+const guiBundle = guiCandidates.find((file) => fs.existsSync(file));
+if (guiBuild.status === 0 && guiBundle) {
+  fs.copyFileSync(guiBundle, path.join(target, "gui-experimental.cjs"));
+} else {
+  process.stderr.write(`[agentorchestra] GUI bundle not built: ${(guiBuild.stderr ?? guiBuild.stdout ?? "").slice(-800)}\n`);
+}
 
 process.stdout.write(`Built plugin ${version} -> ${target}\n`);
 process.stdout.write(`  Codex: plugin.json, .codex-plugin/plugin.json, mcp.json, .mcp.json, skills/\n`);

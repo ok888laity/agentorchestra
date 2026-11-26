@@ -4,10 +4,13 @@
   "description": "OpenCode plugin for AgentOrchestra: auto-registers the local MCP server, skill and commands.",
   "type": "module",
   "exports": {
-    ".": "./opencode-server.js"
+    ".": "./opencode-server.js",
+    "./rpc": "./server/rpc.js",
+    "./gui-experimental": "./gui-experimental.cjs"
   },
   "files": [
     "opencode-server.js",
+    "gui-experimental.cjs",
     "server",
     "config",
     "examples",

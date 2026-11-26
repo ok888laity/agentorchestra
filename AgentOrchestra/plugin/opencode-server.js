@@ -4,7 +4,17 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Plugin, Skill } from "@opencode/plugin";
+import { Rpc } from "@opencode/plugin/rpc";
+import { classifyHostModels, classificationSummaryText, writeProviderPolicy } from "./server/classify.js";
+import { loadConfig } from "./server/config.js";
+import { planFromObject } from "./server/domain.js";
 import { syncHostModels } from "./server/host-models.js";
+import { planPool, poolSummaryText } from "./server/pool.js";
+import { ProviderHub } from "./server/providers/index.js";
+import { Orchestra } from "./server/rpc.js";
+import { routeTask, routePreviewText } from "./server/router.js";
+import { Scheduler } from "./server/scheduler.js";
+import { Store } from "./server/store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const launcher = path.join(here, "server", "launch-mcp.js");
@@ -147,6 +157,60 @@ export default Plugin.define({
       console.error("[agentorchestra] host bridge failed:", error.message);
     }
     const hostExecutor = bridge ? "host-opencode" : (ctx.options?.hostExecutor ?? "opencode");
+
+    if (ctx.rpc?.register) {
+      try {
+        const config = loadConfig(stateRoot);
+        const store = new Store(stateRoot, { project: "gui", policy: config.policyDefaults });
+        const providers = new ProviderHub({ config, models: config.models });
+        const scheduler = new Scheduler({ root: stateRoot, store, config, providers });
+        registrations.push(await ctx.rpc.register(Orchestra, {
+          status: async () => ({ text: JSON.stringify({ project: store.getState().project, progress: store.snapshot().progress }, null, 2) }),
+          classify: async () => ({ text: JSON.stringify(classifyHostModels(stateRoot)) }),
+          confirmProvider: async (input) => {
+            const policy = writeProviderPolicy(stateRoot, String(input.provider), {
+              billing: String(input.billing),
+              privacy: String(input.privacy),
+              enabled: Boolean(input.enabled)
+            });
+            return { text: "已确认 " + input.provider + "：" + policy.billing + " / " + policy.privacy };
+          },
+          examples: async () => {
+            const dir = path.join(here, "examples");
+            const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
+            return { text: files.map((file) => file + "
+" + fs.readFileSync(path.join(dir, file), "utf8")).join("
+---
+") };
+          },
+          submitPlan: async (input) => {
+            const plan = planFromObject(JSON.parse(String(input.plan)), config.policyDefaults);
+            store.installPlan(plan, { replace: true });
+            return { text: "已提交 " + plan.tasks.length + " 个任务（" + plan.project + "）" };
+          },
+          pool: async () => {
+            const state = store.getState();
+            const pool = planPool({ tasks: state.tasks, models: config.models, roles: config.roles, policy: state.policy, state });
+            return { text: poolSummaryText(pool) };
+          },
+          routePreview: async (input) => {
+            const state = store.getState();
+            const task = state.tasks[String(input.taskId)];
+            if (!task) return { text: "任务不存在：" + input.taskId };
+            if (task.humanGate) return { text: "人工验收节点，不选择模型。" };
+            if (task.kind === "script") return { text: "确定性脚本节点：" + (task.command ?? []).join(" ") };
+            const route = routeTask({ task, models: config.models, roles: config.roles, policy: state.policy, state, promptChars: String(task.brief ?? "").length + 3000 });
+            return { text: routePreviewText(route) };
+          },
+          run: async () => {
+            const result = await scheduler.run({ maxSteps: 80 });
+            return { text: "运行结束：" + result.stopReason + " · " + (result.progress ?? 0) + "% 接受" };
+          }
+        }));
+      } catch (error) {
+        console.error("[agentorchestra] RPC registration failed:", error.message);
+      }
+    }
 
     if (!ctx.mcp?.transform) throw new Error("OpenCode MCP transform API is unavailable");
     registrations.push(await ctx.mcp.transform((editor) => {
