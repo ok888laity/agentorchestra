@@ -21,6 +21,7 @@
     "com.openai": {
       "onboardingSkill": "./skills/agentorchestra/SKILL.md",
       "hooks": "./hooks/hooks.json",
+      "mcpServers": "./.mcp.json",
       "interface": {
         "displayName": "AgentOrchestra",
         "shortDescription": "Cost-aware, verification-driven multi-model orchestration",

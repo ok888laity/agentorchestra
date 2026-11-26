@@ -12,7 +12,7 @@ test("dual-host plugin bundle validates and its bundled MCP server handshakes", 
     timeout: 30_000
   });
   assert.match(output, /\[ok\] Codex portable manifest/);
-  assert.match(output, /\[ok\] Codex compatibility manifest/);
+  assert.match(output, /\[ok\] single manifest identity/);
   assert.match(output, /\[ok\] portable stdio MCP config/);
   assert.match(output, /\[ok\] OpenCode plugin package/);
   assert.match(output, /\[ok\] bundled MCP stdio handshake/);

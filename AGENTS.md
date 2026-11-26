@@ -25,7 +25,7 @@ Hard rules:
 Plugin entry points:
 
 - OpenCode: `opencode.json` loads `./AgentOrchestra/plugin`; it auto-registers the MCP server, skill, `/orchestra-status` / `/orchestra-run` / `/orchestra-models`, and host-model refresh hooks.
-- Codex: install from `.agents/plugins/marketplace.json`; the bundle has `plugin.json`, `.codex-plugin/plugin.json`, `skills/` and stdio MCP.
+- Codex: install from `.agents/plugins/marketplace.json`; the bundle has a single `plugin.json` manifest, `skills/` and stdio MCP.
 - Standalone: `node AgentOrchestra/src/cli.js demo --reset`, then `status`.
 
 Useful commands (from `AgentOrchestra/`):

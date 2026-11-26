@@ -70,7 +70,7 @@ codex
 /plugins
 ```
 
-Install **AgentOrchestra** and start a new session. The bundle contains `plugin.json`, `.codex-plugin/plugin.json`, the skill, a stdio MCP server, and a `SessionStart` hook that reads only auth mode / local model cache (never token values) to refresh Codex host models.
+Install **AgentOrchestra** and start a new session. The bundle contains a single `plugin.json` manifest, the skill, a stdio MCP server, and a `SessionStart` hook that reads only auth mode / local model cache (never token values) to refresh Codex host models.
 
 ### In-app UI (no web console)
 

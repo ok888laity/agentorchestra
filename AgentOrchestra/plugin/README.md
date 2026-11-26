@@ -4,7 +4,7 @@ This folder is the installable dual-host bundle for **Codex** and **OpenCode**. 
 
 ## Codex
 
-The plugin exposes a portable `plugin.json`, a compatibility `.codex-plugin/plugin.json`, `skills/agentorchestra/SKILL.md`, and a stdio MCP server via `mcp.json` / `.mcp.json`.
+The plugin exposes a single portable `plugin.json` (with OpenAI settings under `extensions.com.openai`), `skills/agentorchestra/SKILL.md`, and a stdio MCP server via `mcp.json` / `.mcp.json`. There is deliberately no `.codex-plugin/plugin.json` to avoid duplicate-name collisions.
 
 Local repository marketplace (from the workspace root):
 
@@ -49,6 +49,6 @@ The demo is simulated; it proves orchestration only. Real engineering evidence r
 - `examples/` — starter, recursive and subsea simulation DAGs.
 - `skills/agentorchestra/SKILL.md` — host skill.
 - `opencode-server.js` — OpenCode server plugin.
-- `plugin.json`, `.codex-plugin/plugin.json` — Codex manifests.
+- `plugin.json` — single portable manifest for Codex and OpenCode.
 - `mcp.json`, `.mcp.json` — portable and compatibility MCP config.
 

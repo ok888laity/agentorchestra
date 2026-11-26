@@ -31,11 +31,11 @@ check("Codex portable manifest", () => {
   assert.ok(manifest.version);
   assert.ok(manifest.extensions?.["com.openai"]?.interface);
 });
-check("Codex compatibility manifest", () => {
-  const manifest = json(path.join(plugin, ".codex-plugin", "plugin.json"));
-  assert.equal(manifest.name, "agentorchestra");
-  assert.equal(manifest.skills, "./skills/");
-  assert.equal(manifest.mcpServers, "./.mcp.json");
+check("single manifest identity (no duplicate plugin.json)", () => {
+  const compat = path.join(plugin, ".codex-plugin", "plugin.json");
+  assert.equal(fs.existsSync(compat), false, "duplicate .codex-plugin/plugin.json causes name collisions in Codex");
+  const root = json(path.join(plugin, "plugin.json"));
+  assert.equal(root.extensions?.["com.openai"]?.mcpServers, "./.mcp.json");
 });
 check("portable stdio MCP config", () => {
   const doc = json(path.join(plugin, "mcp.json"));

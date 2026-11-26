@@ -123,22 +123,10 @@ write(path.join(target, "plugin.json"), {
     "com.openai": {
       onboardingSkill: "./skills/agentorchestra/SKILL.md",
       hooks: "./hooks/hooks.json",
+      mcpServers: "./.mcp.json",
       interface: interfaceBlock
     }
   }
-});
-
-write(path.join(target, ".codex-plugin", "plugin.json"), {
-  name: "agentorchestra",
-  version,
-  description: "Cost-aware, verification-driven multi-model orchestration with DAGs, budgets, privacy gates, human gates and resumable state.",
-  author: { name: "AgentOrchestra contributors" },
-  license: "MIT",
-  keywords: ["multi-agent", "orchestration", "model-routing", "budget", "mcp", "dag", "codex", "opencode"],
-  skills: "./skills/",
-  mcpServers: "./.mcp.json",
-  hooks: "./hooks/hooks.json",
-  interface: interfaceBlock
 });
 
 write(path.join(target, "server", "sync-codex-host.js"), `import fs from "node:fs";
@@ -589,7 +577,6 @@ write(path.join(target, "package.json"), {
     "hooks",
     "docs",
     "plugin.json",
-    ".codex-plugin",
     "mcp.json",
     ".mcp.json",
     "README.md",
@@ -607,7 +594,7 @@ This folder is the installable dual-host bundle for **Codex** and **OpenCode**. 
 
 ## Codex
 
-The plugin exposes a portable \`plugin.json\`, a compatibility \`.codex-plugin/plugin.json\`, \`skills/agentorchestra/SKILL.md\`, and a stdio MCP server via \`mcp.json\` / \`.mcp.json\`.
+The plugin exposes a single portable \`plugin.json\` (with OpenAI settings under \`extensions.com.openai\`), \`skills/agentorchestra/SKILL.md\`, and a stdio MCP server via \`mcp.json\` / \`.mcp.json\`. There is deliberately no \`.codex-plugin/plugin.json\` to avoid duplicate-name collisions.
 
 Local repository marketplace (from the workspace root):
 
@@ -652,7 +639,7 @@ The demo is simulated; it proves orchestration only. Real engineering evidence r
 - \`examples/\` — starter, recursive and subsea simulation DAGs.
 - \`skills/agentorchestra/SKILL.md\` — host skill.
 - \`opencode-server.js\` — OpenCode server plugin.
-- \`plugin.json\`, \`.codex-plugin/plugin.json\` — Codex manifests.
+- \`plugin.json\` — single portable manifest for Codex and OpenCode.
 - \`mcp.json\`, \`.mcp.json\` — portable and compatibility MCP config.
 `);
 
@@ -671,5 +658,5 @@ if (guiBuild.status === 0 && guiBundle) {
 }
 
 process.stdout.write(`Built plugin ${version} -> ${target}\n`);
-process.stdout.write(`  Codex: plugin.json, .codex-plugin/plugin.json, mcp.json, .mcp.json, skills/\n`);
+process.stdout.write(`  Codex: plugin.json (single manifest), mcp.json, .mcp.json, skills/\n`);
 process.stdout.write(`  OpenCode: package.json -> opencode-server.js\n`);
