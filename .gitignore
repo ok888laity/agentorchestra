@@ -1,3 +1,5 @@
+/.orchestra/
+/scripts/
 AgentOrchestra/.orchestra/
 AgentOrchestra/workspace/
 AgentOrchestra/artifacts/
