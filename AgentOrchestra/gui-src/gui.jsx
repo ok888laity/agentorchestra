@@ -1,83 +1,123 @@
 import { For, Show, createSignal } from "solid-js";
-import { Command, ComposerPill, MenuItem, Panel, Plugin } from "@opencode/plugin/gui";
+import { Command, ComposerPill, MenuItem, Panel, Plugin, SettingsPage } from "@opencode/plugin/gui";
 import { Orchestra } from "./rpc.js";
 
 const i18n = {
   en: {
     "pill.label": "AgentOrchestra",
-    "pill.title": "Open the AgentOrchestra console inside this window",
-    "pill.setup": "Boundaries",
-    "pill.plan": "Submit",
+    "pill.title": "Open AgentOrchestra settings",
+    "pill.setup": "Model boundaries",
+    "pill.plan": "Submit plan",
     "pill.run": "Run",
     "pill.update": "Updates",
-    "menu.open": "AgentOrchestra console",
-    "command.open": "Open AgentOrchestra console",
-    "panel.title": "AgentOrchestra"
+    "menu.open": "AgentOrchestra settings",
+    "command.open": "Open AgentOrchestra settings",
+    "panel.title": "AgentOrchestra",
+    "page.title": "AgentOrchestra",
+    "page.description": "Cost-aware model routing with provider boundaries, planning and review.",
+    "sec.providers": "Provider boundaries",
+    "sec.providers.desc": "Confirm billing and privacy before any model is used.",
+    "sec.plan": "Plan",
+    "sec.plan.desc": "Load an example, submit a DAG and plan worker slots.",
+    "sec.actions": "Actions",
+    "sec.actions.desc": "Run tasks and keep the plugin up to date.",
+    "field.provider": "Provider",
+    "field.billing": "Billing",
+    "field.privacy": "Privacy",
+    "field.enabled": "Enabled",
+    "field.task": "Task",
+    "btn.confirm": "Confirm",
+    "btn.submit": "Submit",
+    "btn.pool": "Plan pool",
+    "btn.preview": "Preview route",
+    "btn.run": "Run",
+    "btn.check": "Check updates",
+    "btn.update": "Update now",
+    "result": "Result",
+    "empty": "No result yet."
   },
   zh: {
     "pill.label": "AgentOrchestra",
-    "pill.title": "在软件内打开 AgentOrchestra 控制台",
+    "pill.title": "打开 AgentOrchestra 设置",
     "pill.setup": "设边界",
     "pill.plan": "提交计划",
     "pill.run": "运行",
     "pill.update": "查更新",
-    "menu.open": "AgentOrchestra 控制台",
-    "command.open": "打开 AgentOrchestra 控制台",
-    "panel.title": "AgentOrchestra"
+    "menu.open": "AgentOrchestra 设置",
+    "command.open": "打开 AgentOrchestra 设置",
+    "panel.title": "AgentOrchestra",
+    "page.title": "AgentOrchestra",
+    "page.description": "成本感知的模型路由：先确认 provider 边界，再规划和审查。",
+    "sec.providers": "模型边界",
+    "sec.providers.desc": "使用任何模型前，先确认其计费与隐私边界。",
+    "sec.plan": "计划",
+    "sec.plan.desc": "载入示例、提交 DAG、规划工作槽位。",
+    "sec.actions": "操作",
+    "sec.actions.desc": "运行任务并检查插件更新。",
+    "field.provider": "Provider",
+    "field.billing": "计费",
+    "field.privacy": "隐私",
+    "field.enabled": "启用",
+    "field.task": "任务",
+    "btn.confirm": "确认",
+    "btn.submit": "提交",
+    "btn.pool": "规划",
+    "btn.preview": "预览",
+    "btn.run": "运行",
+    "btn.check": "查更新",
+    "btn.update": "更新",
+    "result": "结果",
+    "empty": "暂无结果"
   }
 };
 
-const ctl = {
-  background: "var(--background, #161b22)",
-  color: "var(--foreground, #e6edf3)",
-  border: "1px solid var(--border, #30363d)",
-  "border-radius": "6px",
-  padding: "4px 8px",
-  "color-scheme": "dark",
-  cursor: "pointer"
-};
+const BILLING = ["free", "local", "subscription", "api", "unknown"];
+const PRIVACY = ["local", "trusted", "public", "unknown"];
+const selectOptions = (values) => values.map((v) => ({ value: v, label: v }));
 
-const box = {
-  border: "1px solid var(--border, #30363d)",
-  "border-radius": "8px",
-  padding: "8px",
-  background: "var(--panel, transparent)"
-};
-
-const muted = { color: "var(--muted-foreground, #8b949e)", "font-size": "11px" };
-
-function Console(props) {
-  const [output, setOutput] = createSignal("点按钮开始");
+function Settings(props) {
+  const ctx = props.ctx;
+  const ui = ctx.ui;
+  const [output, setOutput] = createSignal(ctx.t("empty"));
   const [providers, setProviders] = createSignal([]);
   const [examples, setExamples] = createSignal([]);
-  const [planName, setPlanName] = createSignal("");
   const [plan, setPlan] = createSignal("");
+  const [planName, setPlanName] = createSignal("");
   const [tasks, setTasks] = createSignal([]);
   const [taskId, setTaskId] = createSignal("");
   const [busy, setBusy] = createSignal(false);
-  const [selected, setSelected] = createSignal("");
+  const [provider, setProvider] = createSignal("");
+  const [billing, setBilling] = createSignal("unknown");
+  const [privacy, setPrivacy] = createSignal("unknown");
+  const [enabled, setEnabled] = createSignal(false);
+  const [draft, setDraft] = createSignal({});
 
   const call = async (name, input, after) => {
     setBusy(true);
     try {
-      const result = await props.rpc()[name](input ?? {});
+      const result = await ctx.client.rpc(Orchestra)[name](input ?? {});
       setOutput(result.text);
       if (after) after(result.text);
     } catch (error) {
-      setOutput("失败：" + String(error?.message ?? error));
+      setOutput(ctx.t("result") + ": " + String(error?.message ?? error));
     } finally {
       setBusy(false);
     }
   };
 
-  const refresh = () => {
+  const load = () => {
     call("classify", {}, (text) => {
-      try { setProviders(JSON.parse(text).groups ?? []); } catch { setProviders([]); }
+      try {
+        const groups = JSON.parse(text).groups ?? [];
+        setProviders(groups);
+        const first = groups[0];
+        if (first && !provider()) selectProvider(first);
+      } catch { setProviders([]); }
     });
     call("examples", {}, (text) => {
       setExamples(text.split("\n---\n").filter(Boolean).map((block) => {
-        const index = block.indexOf("\n");
-        return { name: block.slice(0, index).replace(".json", ""), content: block.slice(index + 1) };
+        const i = block.indexOf("\n");
+        return { name: block.slice(0, i).replace(".json", ""), content: block.slice(i + 1) };
       }));
     });
     call("status", {}, (text) => {
@@ -85,71 +125,97 @@ function Console(props) {
     });
   };
 
-  const confirm = (group) => {
-    call("confirmProvider", {
-      provider: group.provider,
+  const selectProvider = (group) => {
+    setProvider(group.provider);
+    const d = draft()[group.provider] ?? {
       billing: group.currentPolicy?.billing ?? group.billing.suggested,
       privacy: group.currentPolicy?.privacy ?? "unknown",
-      enabled: group.currentPolicy?.enabled ?? !group.needsUserChoice
-    }, refresh);
+      enabled: Boolean(group.currentPolicy?.enabled)
+    };
+    setBilling(d.billing);
+    setPrivacy(d.privacy);
+    setEnabled(d.enabled);
+  };
+
+  const updateDraft = (patch) => {
+    setDraft({ ...draft(), [provider()]: { billing: billing(), privacy: privacy(), enabled: enabled(), ...patch } });
+  };
+
+  const confirm = () => {
+    call("confirmProvider", { provider: provider(), billing: billing(), privacy: privacy(), enabled: enabled() }, load);
   };
 
   return (
-    <div style={{ padding: "12px", "font-size": "13px", display: "flex", "flex-direction": "column", gap: "8px", "color-scheme": "dark", background: "var(--background, #0d1117)", color: "var(--foreground, #e6edf3)" }}>
-      <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
-        <button style={ctl} disabled={busy()} onClick={refresh}>检测</button>
-        <button style={ctl} disabled={busy()} onClick={() => call("run", {})}>运行</button>
-        <button style={ctl} disabled={busy()} onClick={() => call("checkUpdate", {})}>查更新</button>
-        <button style={ctl} disabled={busy()} onClick={() => call("update", {})}>更新</button>
-      </div>
+    <ui.SettingsLayout title={ctx.t("page.title")} description={ctx.t("page.description")}>
+      <ui.SettingsSection title={ctx.t("sec.providers")} footer={<ui.Button onClick={load} size="small">{ctx.t("btn.check")}</ui.Button>}>
+        <ui.SettingsRow title={ctx.t("field.provider")} description={providers().length + " providers"}>
+          <ui.Select
+            label={ctx.t("field.provider")}
+            options={[{ value: "", label: "—" }, ...providers().map((g) => ({ value: g.provider, label: g.provider }))]}
+            value={provider()}
+            onChange={(v) => { const g = providers().find((x) => x.provider === v); if (g) selectProvider(g); }}
+          />
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("field.billing")}>
+          <ui.Select label={ctx.t("field.billing")} options={selectOptions(BILLING)} value={billing()} onChange={(v) => { setBilling(v); updateDraft({ billing: v }); }} />
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("field.privacy")}>
+          <ui.Select label={ctx.t("field.privacy")} options={selectOptions(PRIVACY)} value={privacy()} onChange={(v) => { setPrivacy(v); updateDraft({ privacy: v }); }} />
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("field.enabled")}>
+          <ui.Switch label={ctx.t("field.enabled")} checked={enabled()} onChange={(v) => { setEnabled(v); updateDraft({ enabled: v }); }} />
+        </ui.SettingsRow>
+        <ui.SettingsRow title="">
+          <ui.Button onClick={confirm} disabled={busy() || !provider()} variant="contrast">{ctx.t("btn.confirm")}</ui.Button>
+        </ui.SettingsRow>
+      </ui.SettingsSection>
 
-      <div style={{ ...muted, "font-weight": "bold" }}>模型边界</div>
-      <div style={{ display: "flex", "flex-direction": "column", gap: "6px" }}>
-        <For each={providers()}>{(group) => (
-          <div style={box}>
-            <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center" }}>
-              <strong>{group.provider}</strong>
-              <span style={muted}>{group.needsUserChoice ? "需确认" : "已确认"}</span>
-            </div>
-            <div style={muted}>{group.modelCount} 个 · {group.billing.suggested} / {group.privacy.suggested}</div>
-            <Show when={selected() === group.provider}>
-              <div style={{ display: "flex", gap: "6px", "margin-top": "6px", "flex-wrap": "wrap", "align-items": "center" }}>
-                <select style={ctl} value={group.currentPolicy?.billing ?? group.billing.suggested} onChange={(e) => { group.currentPolicy.billing = e.currentTarget.value; setSelected(group.provider); }}>
-                  <For each={["free", "local", "subscription", "api", "unknown"]}>{(v) => <option value={v}>{v}</option>}</For>
-                </select>
-                <select style={ctl} value={group.currentPolicy?.privacy ?? "unknown"} onChange={(e) => { group.currentPolicy.privacy = e.currentTarget.value; setSelected(group.provider); }}>
-                  <For each={["local", "trusted", "public", "unknown"]}>{(v) => <option value={v}>{v}</option>}</For>
-                </select>
-                <label style={muted}><input type="checkbox" checked={group.currentPolicy?.enabled ?? false} onChange={(e) => { group.currentPolicy.enabled = e.currentTarget.checked; setSelected(group.provider); }} /> 启用</label>
-                <button style={ctl} disabled={busy()} onClick={() => confirm(group)}>确认</button>
-              </div>
-            </Show>
-            <button style={{ ...ctl, "margin-top": "6px", padding: "2px 6px" }} onClick={() => setSelected(selected() === group.provider ? "" : group.provider)}>
-              {selected() === group.provider ? "收起" : "设置"}
-            </button>
-          </div>
-        )}</For>
-      </div>
-
-      <div style={{ ...muted, "font-weight": "bold", "margin-top": "4px" }}>计划</div>
-      <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
+      <ui.SettingsSection title={ctx.t("sec.plan")}>
         <For each={examples()}>{(example) => (
-          <button style={ctl} onClick={() => { setPlan(example.content); setPlanName(example.name); }}>
-            {example.name}{planName() === example.name ? " ✓" : ""}
-          </button>
+          <ui.SettingsRow title={example.name} description={planName() === example.name ? "✓" : ""}>
+            <ui.Button onClick={() => { setPlan(example.content); setPlanName(example.name); }} size="small">{planName() === example.name ? "✓" : "→"}</ui.Button>
+          </ui.SettingsRow>
         )}</For>
-      </div>
-      <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap", "align-items": "center" }}>
-        <button style={ctl} disabled={busy() || !plan()} onClick={() => call("submitPlan", { plan: plan() }, refresh)}>提交</button>
-        <button style={ctl} disabled={busy()} onClick={() => call("pool", {})}>规划</button>
-        <select style={ctl} value={taskId()} onChange={(e) => setTaskId(e.currentTarget.value)}>
-          <option value="">选任务</option>
-          <For each={tasks()}>{(id) => <option value={id}>{id}</option>}</For>
-        </select>
-        <button style={ctl} disabled={busy() || !taskId()} onClick={() => call("routePreview", { taskId: taskId() })}>预览</button>
-      </div>
+        <ui.SettingsRow title={ctx.t("btn.submit")}>
+          <ui.Button onClick={() => call("submitPlan", { plan: plan() }, load)} disabled={busy() || !plan()} variant="contrast">{ctx.t("btn.submit")}</ui.Button>
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("field.task")}>
+          <ui.Select label={ctx.t("field.task")} options={[{ value: "", label: "—" }, ...tasks().map((t) => ({ value: t, label: t }))]} value={taskId()} onChange={setTaskId} />
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("btn.pool")}>
+          <ui.Button onClick={() => call("pool", {})} disabled={busy()} size="small">{ctx.t("btn.pool")}</ui.Button>
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("btn.preview")}>
+          <ui.Button onClick={() => call("routePreview", { taskId: taskId() })} disabled={busy() || !taskId()} size="small">{ctx.t("btn.preview")}</ui.Button>
+        </ui.SettingsRow>
+      </ui.SettingsSection>
 
-      <pre style={{ ...box, "white-space": "pre-wrap", "max-height": "120px", overflow: "auto", margin: 0, "font-size": "11px" }}>{output()}</pre>
+      <ui.SettingsSection title={ctx.t("sec.actions")}>
+        <ui.SettingsRow title={ctx.t("btn.run")}>
+          <ui.Button onClick={() => call("run", {})} disabled={busy()} size="small">{ctx.t("btn.run")}</ui.Button>
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("btn.check")}>
+          <ui.Button onClick={() => call("checkUpdate", {})} disabled={busy()} size="small">{ctx.t("btn.check")}</ui.Button>
+        </ui.SettingsRow>
+        <ui.SettingsRow title={ctx.t("btn.update")}>
+          <ui.Button onClick={() => call("update", {})} disabled={busy()} size="small">{ctx.t("btn.update")}</ui.Button>
+        </ui.SettingsRow>
+      </ui.SettingsSection>
+
+      <ui.SettingsSection title={ctx.t("result")}>
+        <div style={{ padding: "8px", "white-space": "pre-wrap", "max-height": "200px", overflow: "auto" }}>{output()}</div>
+      </ui.SettingsSection>
+    </ui.SettingsLayout>
+  );
+}
+
+function PanelView(props) {
+  const ctx = props.ctx;
+  const ui = ctx.ui;
+  return (
+    <div style={{ padding: "12px", display: "flex", "flex-direction": "column", gap: "8px", "max-height": "100%", overflow: "auto" }}>
+      <ui.Button variant="contrast" onClick={() => ctx.layout.settings("agentorchestra")}>{ctx.t("menu.open")}</ui.Button>
+      <div style={{ "font-size": "12px", opacity: 0.7 }}>{ctx.t("page.description")}</div>
     </div>
   );
 }
@@ -158,11 +224,21 @@ export default Plugin.define({
   i18n,
   setup(ctx) {
     const rpc = () => ctx.client.rpc(Orchestra);
-    const open = () => {
-      const session = ctx.sessions.current();
-      if (session) ctx.layout.open(`${ctx.id}:main`, session);
-      else ctx.commands.run(`${ctx.id}.open`);
-    };
+    const openSettings = () => ctx.layout.settings("agentorchestra");
+
+    ctx.add(SettingsPage, {
+      id: "agentorchestra",
+      icon: "sparkles",
+      get title() { return ctx.t("page.title"); },
+      get entries() {
+        return [
+          { id: "providers", title: ctx.t("sec.providers") },
+          { id: "plan", title: ctx.t("sec.plan") },
+          { id: "actions", title: ctx.t("sec.actions") }
+        ];
+      },
+      render: () => <Settings ctx={ctx} />
+    });
 
     ctx.add(ComposerPill, {
       id: "orchestra",
@@ -171,20 +247,12 @@ export default Plugin.define({
         title: ctx.t("pill.title"),
         icon: "sparkles",
         rows: [
-          { id: "setup", label: ctx.t("pill.setup"), run: open },
-          { id: "plan", label: ctx.t("pill.plan"), run: open },
+          { id: "setup", label: ctx.t("pill.setup"), run: openSettings },
+          { id: "plan", label: ctx.t("pill.plan"), run: openSettings },
           { id: "run", label: ctx.t("pill.run"), run: () => void rpc().run({}) },
           { id: "update", label: ctx.t("pill.update"), run: () => void rpc().checkUpdate({}) }
         ]
       })
-    });
-
-    ctx.add(MenuItem, {
-      menu: "session.panel",
-      id: "open",
-      title: ctx.t("menu.open"),
-      icon: "sparkles",
-      run: open
     });
 
     ctx.add(Command, {
@@ -193,20 +261,27 @@ export default Plugin.define({
       section: "model",
       slash: { name: "orchestra" },
       featured: true,
-      run: open
+      run: openSettings
+    });
+
+    ctx.add(MenuItem, {
+      menu: "session.panel",
+      id: "open",
+      title: ctx.t("menu.open"),
+      icon: "sparkles",
+      run: openSettings
     });
 
     ctx.add(Panel, {
       id: "main",
       region: "side",
-      width: 420,
+      width: 360,
       list: (input) => (input.open.includes("main") ? [{
         id: "main",
         get title() { return ctx.t("panel.title"); },
-        closable: "compact",
-        fallback: true
+        closable: "compact"
       }] : []),
-      render: () => <Console rpc={rpc} />
+      render: () => <PanelView ctx={ctx} />
     });
   }
 });
