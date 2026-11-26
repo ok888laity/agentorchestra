@@ -194,6 +194,21 @@
       .facts { grid-template-columns: 1fr; }
       .bar, .groups { display: none; }
     }
+    .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+    .provider-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--card2); }
+    .provider-card h3 { margin: 0 0 8px; font-size: 15px; }
+    .provider-card .meta { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+    .provider-card .evidence { color: var(--faint); font-size: 11px; line-height: 1.5; margin: 8px 0; }
+    .provider-card .row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+    .provider-card label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--muted); }
+    .provider-card select { background: #0b1426; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+    .tag.yes { color: var(--amber); border-color: var(--amber); }
+    .tag.no { color: var(--green); border-color: var(--green); }
+    .workbench { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 980px) { .workbench { grid-template-columns: 1fr; } }
+    #plan-text { width: 100%; min-height: 150px; background: #0b1426; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+    .example-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .preview-result { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: #0b1426; border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-height: 60px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -246,6 +261,42 @@
       <div class="label">Main-model quota</div>
       <div class="value">未知</div>
       <div class="sub">订阅剩余额度不由本工具虚构</div>
+    </div>
+  </section>
+
+  <section class="card" id="setup-card">
+    <div class="card-head">
+      <h2>首次设置 · Provider 计费 / 隐私确认</h2>
+      <span>打开页面自动检测；未确认的 provider 保持禁用</span>
+      <button class="btn" id="rescan-btn">重新检测</button>
+    </div>
+    <div id="providers" class="setup-grid"></div>
+  </section>
+
+  <section class="card" id="workbench-card">
+    <div class="card-head">
+      <h2>计划工作台 · 全部点击完成</h2>
+      <span>提交 DAG → 规划槽位 → 预览路由 → 运行，无需在对话里提问</span>
+    </div>
+    <div class="workbench">
+      <div>
+        <div class="example-buttons" id="examples"></div>
+        <textarea id="plan-text" spellcheck="false" placeholder="粘贴 DAG 计划 JSON，或点击上方示例载入"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+          <button class="btn primary" id="submit-plan-btn">提交 DAG 计划</button>
+          <button class="btn" id="plan-pool-btn">规划模型池</button>
+        </div>
+        <div id="pool-result" class="preview-result">模型池结果会显示在这里。</div>
+      </div>
+      <div>
+        <div class="row" style="display:flex; gap:8px; align-items:end; flex-wrap:wrap;">
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted);">选择任务
+            <select id="preview-task" style="background:#0b1426;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;"></select>
+          </label>
+          <button class="btn" id="preview-btn">预览路由</button>
+        </div>
+        <div id="preview-result" class="preview-result">路由预览会显示在这里。</div>
+      </div>
     </div>
   </section>
 
@@ -577,6 +628,139 @@
     $("facts").innerHTML = facts.map(([key, value]) => `<div class="fact"><div class="k">${esc(key)}</div><div class="v">${esc(value)}</div></div>`).join("");
   }
 
+  function providerSelect(id, options, value) {
+    return `<select id="${id}">${options.map((option) => `<option value="${option}"${option === value ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  }
+
+  function renderProviders(report) {
+    const host = report.codexAuth?.mode ? ` · Codex auth=${esc(report.codexAuth.mode)}` : "";
+    const groups = report.groups || [];
+    if (!groups.length) {
+      $("providers").innerHTML = '<div class="pool-empty">尚未检测到宿主模型。启动 OpenCode / Codex 后点击“重新检测”。</div>';
+      return;
+    }
+    $("providers").innerHTML = groups.map((group) => {
+      const current = group.currentPolicy || {};
+      const billing = current.billing || group.billing.suggested;
+      const privacy = current.privacy || (group.privacy.trustedCandidate ? "unknown" : group.privacy.suggested);
+      const need = group.needsUserChoice ? '<span class="tag yes">需确认</span>' : '<span class="tag no">已确认</span>';
+      const evidence = [...group.billing.evidence, ...group.privacy.evidence].map((item) => `<div>· ${esc(item)}</div>`).join("");
+      return `<div class="provider-card">
+        <h3>${esc(group.provider)} ${need}</h3>
+        <div class="meta">${group.modelCount} 个模型 · 计费建议 ${esc(group.billing.suggested)} (${esc(group.billing.confidence)}) · 隐私建议 ${esc(group.privacy.suggested)}${group.privacy.trustedCandidate ? "（需你确认 trusted）" : ""}</div>
+        <div class="evidence">${evidence}</div>
+        <div class="row">
+          <label>计费 ${providerSelect("billing-" + group.provider, ["free", "local", "subscription", "api", "unknown"], billing)}</label>
+          <label>隐私 ${providerSelect("privacy-" + group.provider, ["local", "trusted", "public", "unknown"], privacy)}</label>
+          <label class="check"><input type="checkbox" id="enabled-${group.provider}"${current.enabled ? " checked" : ""}> 启用</label>
+          <button class="btn primary" data-confirm="${esc(group.provider)}">确认此 provider</button>
+        </div>
+      </div>`;
+    }).join("") + `<div class="meta">来源 ${esc(report.source || "none")}${host}</div>`;
+  }
+
+  async function loadClassification() {
+    try {
+      renderProviders(await api("/api/classification"));
+    } catch (error) {
+      $("providers").innerHTML = '<div class="pool-empty">检测失败：' + esc(error.message) + "</div>";
+    }
+  }
+
+  async function confirmProvider(provider) {
+    const billing = $("billing-" + provider).value;
+    const privacy = $("privacy-" + provider).value;
+    const enabled = $("enabled-" + provider).checked;
+    try {
+      const result = await api("/api/provider-policy", {
+        method: "POST",
+        body: JSON.stringify({ provider, billing, privacy, enabled })
+      });
+      renderProviders(result.classification);
+      toast(provider + " 已确认：" + billing + " / " + privacy + (enabled ? "（启用）" : "（禁用）"));
+      refresh();
+    } catch (error) {
+      toast("确认失败：" + error.message, true);
+    }
+  }
+
+  async function loadExamples() {
+    try {
+      const { examples } = await api("/api/examples");
+      $("examples").innerHTML = examples.map((example) => `<button class="btn" data-example="${esc(example.name)}">载入 ${esc(example.name)}</button>`).join("");
+    } catch {
+      $("examples").innerHTML = "";
+    }
+  }
+
+  async function submitPlan() {
+    try {
+      const result = await api("/api/plan", {
+        method: "POST",
+        body: JSON.stringify({ plan: $("plan-text").value })
+      });
+      toast("已提交 " + result.tasks + " 个任务（项目 " + esc(result.project) + "）");
+      state = result.snapshot;
+      render();
+    } catch (error) {
+      toast("提交失败：" + error.message, true);
+    }
+  }
+
+  async function planPoolNow() {
+    try {
+      const result = await api("/api/pool", { method: "POST", body: "{}" });
+      const pool = result.pool;
+      $("pool-result").textContent = `目标 ${pool.target} · 可用槽位 ${pool.slots.length}/${pool.target} · ${pool.billingMode} · 预计每波 ${money(pool.estimatedWaveCostCny)}\n`
+        + pool.slots.map((slot) => `#${slot.slot} ${slot.role} -> ${slot.modelId} (${slot.costClass}/${slot.privacy})`).join("\n")
+        + (result.warnings?.length ? "\n警告：" + result.warnings.join("；") : "");
+      refresh();
+    } catch (error) {
+      toast("规划失败：" + error.message, true);
+    }
+  }
+
+  function syncPreviewTasks() {
+    const select = $("preview-task");
+    const tasks = Object.values(state?.tasks || {});
+    const previous = select.value;
+    select.innerHTML = tasks.map((task) => `<option value="${esc(task.id)}">${esc(task.id)} · ${esc(task.title)}</option>`).join("");
+    if (previous && tasks.some((task) => task.id === previous)) select.value = previous;
+  }
+
+  async function previewRoute() {
+    const taskId = $("preview-task").value;
+    if (!taskId) {
+      toast("请先提交 DAG 计划", true);
+      return;
+    }
+    try {
+      const result = await api("/api/route-preview", {
+        method: "POST",
+        body: JSON.stringify({ taskId })
+      });
+      if (result.special) {
+        $("preview-result").textContent = result.special === "human-gate"
+          ? "人工验收节点：不选择模型，必须由人审批。"
+          : "确定性脚本节点：命令 " + (result.command || []).join(" ");
+        return;
+      }
+      const route = result.route;
+      const selected = route.selected;
+      const rejected = Object.entries(result.rejected || {}).map(([code, count]) => `${code}×${count}`).join(" · ");
+      $("preview-result").textContent = selected
+        ? `${result.task.id} → ${selected.label} (${selected.modelId})\n`
+          + `平台 ${selected.provider} · 成本 ${selected.costClass} · 隐私 ${selected.privacy}\n`
+          + `能力拟合 ${selected.quality} / 最低线 ${route.minQuality} · 综合分 ${selected.score}\n`
+          + `预计成本 ${money(selected.estimateCny)} · 剩余预算 ${money(route.remainingBudgetCny)}\n`
+          + `候选：${(route.candidates || []).map((item) => `${item.modelId}(${item.score})`).join(" · ") || "无"}\n`
+          + `排除：${rejected || "无"}`
+        : `${result.task.id} → 无可用模型\n原因：${route.reasonText || "—"}`;
+    } catch (error) {
+      toast("预览失败：" + error.message, true);
+    }
+  }
+
   function render() {
     if (!state) return;
     const data = state;
@@ -596,6 +780,7 @@
     renderEvents(data);
     renderFacts(data);
     syncPolicyInputs(data);
+    syncPreviewTasks();
   }
 
   async function refresh() {
@@ -657,7 +842,7 @@
   }
 
   async function decide(taskId, decision) {
-    const note = decision === "reject" ? (prompt("驳回原因（会写入审批记录）") || "Rejected by human") : "Approved from dashboard";
+    const note = decision === "reject" ? "Rejected from dashboard" : "Approved from dashboard";
     try {
       state = await api("/api/approve", { method: "POST", body: JSON.stringify({ taskId, decision, note }) });
       render();
@@ -692,6 +877,22 @@
   $("run-btn").addEventListener("click", runPending);
   $("pause-btn").addEventListener("click", togglePause);
   $("refresh-btn").addEventListener("click", refresh);
+  $("rescan-btn").addEventListener("click", loadClassification);
+  $("submit-plan-btn").addEventListener("click", submitPlan);
+  $("plan-pool-btn").addEventListener("click", planPoolNow);
+  $("preview-btn").addEventListener("click", previewRoute);
+  $("providers").addEventListener("click", (event) => {
+    const target = event.target.closest("button[data-confirm]");
+    if (target) confirmProvider(target.dataset.confirm);
+  });
+  $("examples").addEventListener("click", (event) => {
+    const target = event.target.closest("button[data-example]");
+    if (!target) return;
+    fetch("/api/examples").then((response) => response.json()).then(({ examples }) => {
+      const found = examples.find((item) => item.name === target.dataset.example);
+      if (found) $("plan-text").value = found.content;
+    });
+  });
   $("tasks-body").addEventListener("click", (event) => {
     const target = event.target.closest("button");
     if (!target) return;
@@ -703,6 +904,8 @@
     if (!document.hidden) refresh();
   });
   refresh();
+  loadClassification();
+  loadExamples();
 </script>
 </body>
 </html>

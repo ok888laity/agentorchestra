@@ -72,6 +72,17 @@ codex
 
 Install **AgentOrchestra** and start a new session. The bundle contains `plugin.json`, `.codex-plugin/plugin.json`, the skill, a stdio MCP server, and a `SessionStart` hook that reads only auth mode / local model cache (never token values) to refresh Codex host models.
 
+### Click-only console (no chat questions)
+
+Everything — provider billing/privacy confirmation, DAG submission, pool planning, route preview, run and approval — is available as a local web UI with buttons and dropdowns. There are no `prompt()` dialogs.
+
+```bash
+cd AgentOrchestra
+node src/cli.js dashboard --port 8765
+```
+
+Open `http://127.0.0.1:8765`. The first section detects providers automatically on page load and lets you confirm each one by clicking. The workbench loads an example DAG, submits it, plans the pool and previews any task's route. Loopback only.
+
 ### Standalone CLI (no install, Node.js 20.11+)
 
 ```bash

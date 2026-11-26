@@ -3,8 +3,12 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { classifyHostModels, writeProviderPolicy } from "./classify.js";
 import { loadConfig, resolveRoot } from "./config.js";
+import { planFromObject } from "./domain.js";
+import { planPool } from "./pool.js";
 import { ProviderHub } from "./providers/index.js";
+import { routeTask } from "./router.js";
 import { Scheduler } from "./scheduler.js";
 import { Store } from "./store.js";
 import { clamp, nowIso } from "./util.js";
@@ -157,6 +161,99 @@ export async function startDashboard({ root = resolveRoot(), port = 8765, host =
         }
         const content = runtime.scheduler.workspace.readArtifact(taskId, artifactPath);
         sendText(response, 200, content);
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/api/classification") {
+        sendJson(response, 200, classifyHostModels(root));
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/provider-policy") {
+        const body = await readBody(request);
+        if (!body.provider) {
+          sendJson(response, 400, { error: "provider is required" });
+          return;
+        }
+        const patch = {};
+        for (const key of ["billing", "privacy", "enabled", "allowPatterns"]) {
+          if (Object.hasOwn(body, key)) patch[key] = body[key];
+        }
+        if (!Object.keys(patch).length) {
+          sendJson(response, 400, { error: "No provider fields supplied" });
+          return;
+        }
+        const policy = writeProviderPolicy(root, body.provider, patch);
+        sendJson(response, 200, { ok: true, provider: body.provider, policy, classification: classifyHostModels(root) });
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/api/examples") {
+        const dir = path.join(root, "examples");
+        const examples = fs.existsSync(dir)
+          ? fs.readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => ({
+              name: file,
+              content: fs.readFileSync(path.join(dir, file), "utf8")
+            }))
+          : [];
+        sendJson(response, 200, { examples });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/plan") {
+        const body = await readBody(request);
+        let source;
+        if (body.file) {
+          const file = path.basename(String(body.file));
+          source = JSON.parse(fs.readFileSync(path.join(root, "examples", file), "utf8"));
+        } else if (body.plan) {
+          source = typeof body.plan === "string" ? JSON.parse(body.plan) : body.plan;
+        } else {
+          sendJson(response, 400, { error: "plan or file is required" });
+          return;
+        }
+        const runtime = createRuntime();
+        const plan = planFromObject(source, runtime.config.policyDefaults);
+        runtime.store.installPlan(plan, { replace: true });
+        sendJson(response, 200, { ok: true, project: plan.project, tasks: plan.tasks.length, snapshot: snapshot(runtime) });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/route-preview") {
+        const body = await readBody(request);
+        const runtime = currentRuntime();
+        const tasks = Object.values(runtime.store.getState().tasks);
+        const task = body.taskId
+          ? tasks.find((item) => item.id === body.taskId)
+          : tasks.find((item) => item.status === "ready" || item.status === "blocked");
+        if (!task) {
+          sendJson(response, 404, { error: "Task not found or no plan submitted" });
+          return;
+        }
+        if (task.humanGate || task.kind === "script") {
+          sendJson(response, 200, { task: { id: task.id, title: task.title }, special: task.humanGate ? "human-gate" : "script", command: task.command ?? null });
+          return;
+        }
+        const state = runtime.store.getState();
+        const route = routeTask({
+          task,
+          models: runtime.config.models,
+          roles: runtime.config.roles,
+          policy: state.policy,
+          state,
+          promptChars: String(task.brief ?? "").length + 3000
+        });
+        const rejected = {};
+        for (const item of route.rejected ?? []) rejected[item.code] = (rejected[item.code] ?? 0) + 1;
+        sendJson(response, 200, { task: { id: task.id, title: task.title }, route, rejected });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/pool") {
+        const runtime = currentRuntime();
+        const state = runtime.store.getState();
+        const pool = planPool({
+          tasks: state.tasks,
+          models: runtime.config.models,
+          roles: runtime.config.roles,
+          policy: state.policy,
+          state
+        });
+        sendJson(response, 200, { pool, warnings: pool.warnings ?? [], shortages: pool.shortages ?? [] });
         return;
       }
       if (request.method === "POST" && url.pathname === "/api/policy") {

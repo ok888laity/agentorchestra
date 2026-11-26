@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-11-26T08:17:36.657Z",
+  "source": "opencode",
+  "providers": {
+    "opencode": {
+      "id": "opencode",
+      "name": "opencode",
+      "package": null,
+      "activation": null,
+      "baseURLHost": null,
+      "hasSourceConnection": false
+    },
+    "opencode-go": {
+      "id": "opencode-go",
+      "name": "opencode-go",
+      "package": null,
+      "activation": null,
+      "baseURLHost": null,
+      "hasSourceConnection": false
+    },
+    "openai": {
+      "id": "openai",
+      "name": "openai",
+      "package": null,
+      "activation": null,
+      "baseURLHost": null,
+      "hasSourceConnection": false
+    }
+  }
+}
