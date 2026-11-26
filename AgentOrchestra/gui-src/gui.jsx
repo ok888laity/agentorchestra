@@ -71,6 +71,15 @@ const i18n = {
   }
 };
 
+// Desktop hosts report locales like zh-CN / zh-TW / en-US. English fills keys a
+// locale omits, so alias each variant to the closest full dictionary.
+i18n["en-US"] = i18n.en;
+i18n["en-GB"] = i18n.en;
+i18n["zh-CN"] = i18n.zh;
+i18n["zh-TW"] = i18n.zh;
+i18n["zh-Hans"] = i18n.zh;
+i18n["zh-Hant"] = i18n.zh;
+
 const BILLING = ["free", "local", "subscription", "api", "unknown"];
 const PRIVACY = ["local", "trusted", "public", "unknown"];
 const selectOptions = (values) => values.map((v) => ({ value: v, label: v }));

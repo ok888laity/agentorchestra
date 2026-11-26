@@ -7,6 +7,20 @@ metadata:
 
 # AgentOrchestra
 
+## 中文速览（先看这里）
+
+- **Codex 没有界面按钮**，直接用一句话调用 MCP 工具：
+  - “检查状态” → `orchestra_status`
+  - “检查模型边界 / 归类 provider” → `orchestra_classify_host_models`
+  - “确认某 provider 的计费和隐私” → `orchestra_set_provider_policy`
+  - “提交计划” → `orchestra_submit`，“预览某任务模型” → `orchestra_route_preview`
+  - “规划模型池” → `orchestra_plan_pool`，“运行 / 审批” → `orchestra_run` / `orchestra_approve`
+- 首次必须先确认 provider 边界；插件默认全部禁用，未确认不会发送任何内容。
+- 保密内容不能发给 public/unknown 模型；免费不等于安全。配额一律报 `unknown`，不编数字。
+- 模拟输出要标 `simulated`，不是工程证据。
+
+---
+
 AgentOrchestra is the **entry and rule layer** for long-running, multi-module work. The deterministic scheduler underneath owns task state, routing, budgets, locks and evidence. Do not turn this into a chat room of agents.
 
 The main model stays responsible for L0 decisions: understanding the request, architecture, acceptance standards and final human-facing judgement. Workers do bounded L1/L2 work. The scheduler never silently accepts a lower-quality result just because a cheaper model was selected.
