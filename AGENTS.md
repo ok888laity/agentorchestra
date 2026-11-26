@@ -32,7 +32,6 @@ Useful commands (from `AgentOrchestra/`):
 
 - `node src/cli.js demo --reset` — offline proof of the full pipeline.
 - `node src/cli.js plan --file examples/subsea-rig.json` — simulated subsea rig DAG.
-- `node src/cli.js dashboard --port 8765` — local console.
 - `node src/mcp.js` — direct MCP fallback.
 - `npm run build:plugin && npm run verify:plugin` — rebuild/verify both plugin manifests.
 

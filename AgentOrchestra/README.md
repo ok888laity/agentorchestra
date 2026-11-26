@@ -9,7 +9,7 @@ AgentOrchestra is not a swarm-of-chat-agents demo. It is a deterministic schedul
 - evidence-bound acceptance, independent review and human gates
 - single-writer resource locks (for SolidWorks-style shared artifacts)
 - versioned artifacts, shared memory and context packets
-- CLI, MCP stdio server and a local dashboard
+- CLI and MCP stdio server
 - zero runtime dependencies, Node.js 20+
 
 The main model keeps the decisions. Workers do bounded tasks. The scheduler owns state, money, locks and proof.
@@ -34,7 +34,6 @@ cd AgentOrchestra
 node src/cli.js doctor
 node src/cli.js demo --reset
 node src/cli.js status
-node src/cli.js dashboard --port 8765
 ```
 
 Expected demo result: 7 of 8 nodes accepted; the final node is a human gate and stays `waiting_approval`. The free-model share, API spend and evidence class are real state, not model estimates.
@@ -64,7 +63,7 @@ The useful part is not “call a free model”. It is making the cheap choice **
 ## Architecture
 
 ```text
-Codex / OpenCode / CLI / dashboard
+Codex / OpenCode / CLI
                 │
         SKILL.md + MCP tools
                 │
@@ -87,7 +86,6 @@ Codex / OpenCode / CLI / dashboard
 - `src/providers/` — mock, OpenCode/Codex CLI templates, OpenAI-compatible HTTP.
 - `src/store.js` — atomic JSON snapshot + append-only journal (pluggable store boundary).
 - `src/workspace.js` — isolated task directories and versioned artifacts.
-- `src/dashboard.js` / `src/dashboard.html` — local console.
 - `src/mcp.js` — stdio JSON-RPC MCP server.
 
 ### Persistence note
@@ -112,7 +110,6 @@ Run from `AgentOrchestra/`:
 | `node src/cli.js decompose <task> --file children.json` | Split into children + integration |
 | `node src/cli.js note add "..." --tags mech,risk` | Shared project memory |
 | `node src/cli.js models [discover --provider opencode]` | Catalog / discovery |
-| `node src/cli.js dashboard --port 8765` | Local console |
 | `node src/cli.js mcp` | MCP stdio server |
 | `node src/cli.js doctor` | Environment and provider checks |
 | `node src/cli.js eval` | Routing/quality regression eval |
@@ -236,15 +233,14 @@ AgentOrchestra borrows patterns, not code, from Token-Beggar, claude-model-route
 - No real quota API: subscription remaining quota is `unknown`.
 - No SolidWorks kernel/API integration in V1; only the resource lock and work contract.
 - API cost estimates use configured prices and estimated tokens; they are guards, not invoices.
-- Dashboard is loopback-only and has no multi-user auth.
 - Real CLI flags may drift; verify with `doctor` and a small smoke task.
 - The JSON store is single-process. Do not run two schedulers against the same root.
 
 ## Roadmap
 
-V1 (this repository): scheduler, router, gates, locks, artifacts, CLI, MCP, dashboard, tests.
+V1 (this repository): scheduler, router, gates, locks, artifacts, CLI, MCP, tests.
 
-V2: verified OpenCode/Codex smoke paths, OpenCode HTTP/SDK adapter, SQLite store, worktree isolation, dashboard approvals with auth, token calibration from real usage, model capability calibration.
+V2: verified OpenCode/Codex smoke paths, OpenCode HTTP/SDK adapter, SQLite store, worktree isolation, token calibration from real usage, model capability calibration.
 
 V3: multi-project service, remote workers, SolidWorks adapter with a real single-writer bridge, team policies, historical routing optimization.
 

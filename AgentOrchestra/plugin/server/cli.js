@@ -138,8 +138,6 @@ function printRunSummary(summary) {
     process.stdout.write("\nWARNING: every accepted result is simulated mock output. This proves orchestration only, not engineering correctness.\n");
   }
   printNextActions(summary);
-  const entry = path.relative(process.cwd(), process.argv[1] ?? "src/cli.js").replaceAll("\\", "/") || "src/cli.js";
-  process.stdout.write(`\nDashboard: node ${entry} dashboard --port 8765\n`);
 }
 
 function printStatus(snapshot) {
@@ -241,7 +239,7 @@ async function cmdDoctor(runtime, flags) {
   process.stdout.write("\nNotes:\n");
   process.stdout.write("- Missing CLI/model credentials are warnings, not silent failures. The mock provider is offline-only.\n");
   process.stdout.write("- OpenCode/Codex adapter flags are templates; verify them against your installed version before production use.\n");
-  process.stdout.write("- Subscription quota is not readable through a stable public API. The dashboard reports 'unknown', never a fabricated number.\n");
+  process.stdout.write("- Subscription quota is not readable through a stable public API. Status reports 'unknown', never a fabricated number.\n");
   const critical = checks.filter((check) => ["State directory writable", "Model catalog"].includes(check.name));
   if (critical.some((check) => !check.ok)) process.exitCode = 1;
 }
@@ -499,7 +497,6 @@ async function main() {
       "  retry <task>                   Reset a failed task",
       "  decompose <task> --file <json> Split a task into children + integration",
       "  note add|list                  Shared project memory",
-      "  dashboard [--port 8765]        Local web console",
       "  mcp                            MCP stdio server",
       "  doctor                         Environment and provider checks",
       "  eval                           Routing/quality regression checks",
@@ -508,8 +505,7 @@ async function main() {
       "Global: --root <dir> --json",
       "Examples:",
       "  node src/cli.js demo",
-      "  node src/cli.js run --max-steps 50",
-      "  node src/cli.js dashboard --port 8765"
+      "  node src/cli.js run --max-steps 50"
     ].join("\n") + "\n");
     return;
   }
@@ -661,17 +657,6 @@ async function main() {
 
   if (command === "doctor") {
     await cmdDoctor(runtime, flags);
-    return;
-  }
-
-  if (command === "dashboard") {
-    const { startDashboard } = await import("./dashboard.js");
-    await startDashboard({
-      root,
-      port: numberFlag(flags.port, 8765),
-      host: flags.host ?? "127.0.0.1",
-      open: Boolean(flags.open)
-    });
     return;
   }
 

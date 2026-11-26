@@ -23,7 +23,7 @@ The main model stays responsible for L0 decisions: understanding the request, ar
 
 ## What is real today
 
-- Deterministic scheduler, DAG, budgets, privacy routing, quality gates, review, resource locks, artifacts/versioning, resume, dashboard, MCP server: implemented and covered by tests.
+- Deterministic scheduler, DAG, budgets, privacy routing, quality gates, review, resource locks, artifacts/versioning, resume, MCP server: implemented and covered by tests.
 - `mock` provider: deterministic offline simulation. It proves orchestration only. It is **not** engineering evidence.
 - OpenCode/Codex CLI and OpenAI-compatible HTTP adapters: implemented as templates. Verify flags and credentials before relying on them. They were not exercised on this machine (no CLI/key).
 - SolidWorks: only the single-writer lock and task contract exist. There is no CAD kernel integration in V1.
@@ -67,7 +67,6 @@ node server/cli-plugin.js status
 node server/cli-plugin.js approve approval --note "reviewed drawings and residual risks"
 
 # 5. Long-running console
-node server/cli-plugin.js dashboard --port 8765
 ```
 
 The CLI is resumable. A crash or restart does not erase accepted work. Start again with `run`; locks left by interrupted tasks are recovered.
@@ -205,7 +204,7 @@ score = q * quality + (1 - q) * costScore + history - latency
 | `main_model` | Supplied by the main model; deterministic gate still applies |
 | `human-approved` | A human explicitly closed a gate |
 
-The dashboard and status output show these classes. A simulated-only run is labelled as such.
+Status output shows these classes. A simulated-only run is labelled as such.
 
 ## Failure handling
 

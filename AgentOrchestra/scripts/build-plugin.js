@@ -8,8 +8,8 @@ const root = path.resolve(here, "..");
 const target = path.join(root, "plugin");
 const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
 
-function copyDir(source, destination) {
-  fs.cpSync(source, destination, { recursive: true });
+function copyDir(source, destination, filter) {
+  fs.cpSync(source, destination, { recursive: true, ...(filter ? { filter } : {}) });
 }
 
 function write(file, value) {
@@ -20,7 +20,7 @@ function write(file, value) {
 fs.rmSync(target, { recursive: true, force: true });
 fs.mkdirSync(target, { recursive: true });
 
-copyDir(path.join(root, "src"), path.join(target, "server"));
+copyDir(path.join(root, "src"), path.join(target, "server"), (src) => !/dashboard\.(js|html)$/.test(src));
 copyDir(path.join(root, "config"), path.join(target, "config"));
 copyDir(path.join(root, "examples"), path.join(target, "examples"));
 copyDir(path.join(root, "docs"), path.join(target, "docs"));
@@ -647,7 +647,7 @@ The demo is simulated; it proves orchestration only. Real engineering evidence r
 
 ## Layout
 
-- \`server/\` — bundled scheduler, CLI, MCP server, dashboard.
+- \`server/\` — bundled scheduler, CLI and MCP server.
 - \`config/\` — model catalog and policy defaults.
 - \`examples/\` — starter, recursive and subsea simulation DAGs.
 - \`skills/agentorchestra/SKILL.md\` — host skill.

@@ -44,7 +44,7 @@ The demo is simulated; it proves orchestration only. Real engineering evidence r
 
 ## Layout
 
-- `server/` — bundled scheduler, CLI, MCP server, dashboard.
+- `server/` — bundled scheduler, CLI and MCP server.
 - `config/` — model catalog and policy defaults.
 - `examples/` — starter, recursive and subsea simulation DAGs.
 - `skills/agentorchestra/SKILL.md` — host skill.

@@ -2,7 +2,7 @@
 
 **Cost-aware, verification-driven multi-model orchestration — packaged as a one-click plugin for OpenCode and Codex.**
 
-AgentOrchestra is not a chat-agent swarm demo. It is a deterministic scheduler with DAG tasks, cost/quality routing under hard privacy and budget gates, evidence-bound acceptance, independent review, human gates, single-writer resource locks, versioned artifacts, resumable JSON state, a CLI, an MCP server and a local dashboard. The main model keeps all decisions; workers are bounded role-specialized slots.
+AgentOrchestra is not a chat-agent swarm demo. It is a deterministic scheduler with DAG tasks, cost/quality routing under hard privacy and budget gates, evidence-bound acceptance, independent review, human gates, single-writer resource locks, versioned artifacts, resumable JSON state, a CLI and an MCP server. The main model keeps all decisions; workers are bounded role-specialized slots.
 
 ## One-click start
 
@@ -72,16 +72,9 @@ codex
 
 Install **AgentOrchestra** and start a new session. The bundle contains `plugin.json`, `.codex-plugin/plugin.json`, the skill, a stdio MCP server, and a `SessionStart` hook that reads only auth mode / local model cache (never token values) to refresh Codex host models.
 
-### Click-only console (no chat questions)
+### In-app UI (no web console)
 
-Everything — provider billing/privacy confirmation, DAG submission, pool planning, route preview, run and approval — is available as a local web UI with buttons and dropdowns. There are no `prompt()` dialogs.
-
-```bash
-cd AgentOrchestra
-node src/cli.js dashboard --port 8765
-```
-
-Open `http://127.0.0.1:8765`. The first section detects providers automatically on page load and lets you confirm each one by clicking. The workbench loads an example DAG, submits it, plans the pool and previews any task's route. Loopback only.
+OpenCode Desktop shows a native **AgentOrchestra** settings page (Settings → AgentOrchestra, or the composer pill). Everything — provider confirmation, plan submit, pool planning, route preview, run and update check — is done there with the app's own controls. No web console is started.
 
 ### Standalone CLI (no install, Node.js 20.11+)
 
@@ -90,7 +83,6 @@ cd AgentOrchestra
 node src/cli.js doctor
 node src/cli.js demo --reset
 node src/cli.js status
-node src/cli.js dashboard --port 8765
 ```
 
 The demo is simulated: it proves orchestration, budgets, locks, gates and resume — not engineering correctness. Real model calls require a configured provider.

@@ -13,7 +13,6 @@
     "demo": "node src/cli.js demo",
     "status": "node src/cli.js status",
     "doctor": "node src/cli.js doctor",
-    "dashboard": "node src/cli.js dashboard",
     "mcp": "node src/cli.js mcp",
     "eval": "node src/cli.js eval",
     "build:plugin": "node scripts/build-plugin.js",
