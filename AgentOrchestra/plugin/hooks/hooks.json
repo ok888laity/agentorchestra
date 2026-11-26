@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/server/sync-codex-host.js",
+            "statusMessage": "Syncing AgentOrchestra Codex host models"
+          }
+        ]
+      }
+    ]
+  }
+}

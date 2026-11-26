@@ -1,0 +1,26 @@
+{
+  "name": "agent-orchestra",
+  "version": "0.1.0",
+  "description": "Cost-aware, verification-driven multi-model agent orchestrator for Codex, OpenCode and OpenAI-compatible endpoints.",
+  "type": "module",
+  "bin": {
+    "orchestra": "src/cli.js"
+  },
+  "scripts": {
+    "pretest": "node scripts/build-plugin.js",
+    "test": "node --test",
+    "preverify:plugin": "node scripts/build-plugin.js",
+    "demo": "node src/cli.js demo",
+    "status": "node src/cli.js status",
+    "doctor": "node src/cli.js doctor",
+    "dashboard": "node src/cli.js dashboard",
+    "mcp": "node src/cli.js mcp",
+    "eval": "node src/cli.js eval",
+    "build:plugin": "node scripts/build-plugin.js",
+    "verify:plugin": "node scripts/verify-plugin.js"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "license": "MIT"
+}

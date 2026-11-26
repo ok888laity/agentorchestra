@@ -1,0 +1,8 @@
+.orchestra/
+workspace/
+artifacts/
+plugin/.orchestra/
+plugin/workspace/
+plugin/artifacts/
+node_modules/
+*.log

@@ -1,0 +1,248 @@
+{
+  "project": "subsea-rig-demo",
+  "description": "Simulated subsea drilling rig engineering DAG. Demonstrates confidentiality routing, local-only models, cross-provider review, and a single-writer SolidWorks resource lock. All worker output is simulated; this is not engineering evidence.",
+  "policy": {
+    "qualityPreference": 40,
+    "apiBudgetCny": 0,
+    "zeroExtraPaid": true,
+    "maxConcurrency": 3,
+    "maxDepth": 2,
+    "reviewMode": "critical",
+    "requireCrossProviderReview": true
+  },
+  "tasks": [
+    {
+      "id": "patent-scan",
+      "title": "专利与技术资料扫描",
+      "brief": "整理与海底钻机总装、承载、捕获、退销、防带载解锁、四井生产流路相关的公开专利与技术资料。区分检索事实与推断，列出权利要求风险和可规避方向。",
+      "group": "文献专利",
+      "kind": "research",
+      "tier": "L2",
+      "role": "researcher",
+      "difficulty": 2,
+      "confidentiality": 2,
+      "deps": [],
+      "priority": 10,
+      "acceptance": {
+        "minChars": 500,
+        "mustContain": ["专利", "权利要求", "风险"],
+        "artifacts": ["patent-scan.md"],
+        "requireEvidence": true
+      }
+    },
+    {
+      "id": "mech-requirements",
+      "title": "机械动作链需求定义",
+      "brief": "定义承载、捕获、退销、防带载解锁的动作链、接口边界、失效模式和最低验收标准。不得把推测写成已确认事实。",
+      "group": "机械结构",
+      "kind": "design",
+      "tier": "L1",
+      "role": "designer",
+      "difficulty": 3,
+      "confidentiality": 1,
+      "deps": ["patent-scan"],
+      "priority": 9,
+      "acceptance": {
+        "minChars": 500,
+        "mustContain": ["承载", "捕获", "退销", "防带载解锁"],
+        "artifacts": ["mech-requirements.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "mech-analysis",
+      "title": "机构干涉与强度分析",
+      "brief": "对机械动作链做干涉、载荷路径和强度校核分析。列出假设、边界条件、未验证项和需要实物试验确认的部分。",
+      "group": "机械结构",
+      "kind": "analysis",
+      "tier": "L1",
+      "role": "analyst",
+      "difficulty": 4,
+      "confidentiality": 1,
+      "deps": ["mech-requirements"],
+      "priority": 8,
+      "acceptance": {
+        "minChars": 450,
+        "mustContain": ["强度", "干涉", "边界条件"],
+        "artifacts": ["mech-analysis.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "flow-design",
+      "title": "四井生产流路设计",
+      "brief": "设计四井生产、隔离、上引管与生产芯的流路方案。说明阀门边界、隔离逻辑、失效安全和可维护性。",
+      "group": "生产流路",
+      "kind": "design",
+      "tier": "L1",
+      "role": "designer",
+      "difficulty": 4,
+      "confidentiality": 2,
+      "deps": ["patent-scan"],
+      "priority": 9,
+      "acceptance": {
+        "minChars": 500,
+        "mustContain": ["四井", "隔离", "上引管", "生产芯"],
+        "artifacts": ["flow-design.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "flow-review",
+      "title": "生产流路独立审查",
+      "brief": "独立审查四井流路设计，返回 JSON 结论：score、pass、issues、residual_risks。不得修改设计本身。",
+      "group": "交叉审查",
+      "kind": "review",
+      "tier": "L1",
+      "role": "reviewer",
+      "difficulty": 3,
+      "confidentiality": 2,
+      "deps": ["flow-design"],
+      "priority": 7,
+      "acceptance": {
+        "minChars": 80,
+        "artifacts": ["flow-review.json"],
+        "jsonKeys": ["score", "pass", "issues"],
+        "requireJsonVerdict": true,
+        "critical": true,
+        "skipModelReview": true
+      }
+    },
+    {
+      "id": "patent-compare",
+      "title": "专利对比与规避建议",
+      "brief": "将当前方案与检索到的专利做对比，指出结构、动作顺序、流路隔离上的差异和潜在侵权风险。资料不足时明确标注未知。",
+      "group": "文献专利",
+      "kind": "research",
+      "tier": "L2",
+      "role": "researcher",
+      "difficulty": 2,
+      "confidentiality": 2,
+      "deps": ["patent-scan", "flow-design"],
+      "priority": 6,
+      "acceptance": {
+        "minChars": 450,
+        "mustContain": ["对比", "差异", "未知"],
+        "artifacts": ["patent-compare.md"],
+        "requireEvidence": true
+      }
+    },
+    {
+      "id": "solidworks-assembly",
+      "title": "SolidWorks 总装建模计划",
+      "brief": "生成 SolidWorks 总装建模步骤：零件拆分、配合约束、干涉检查、版本和回滚点。此节点占用 solidworks:assembly 单写者锁，其他建模节点不得并发写入。",
+      "group": "三维建模",
+      "kind": "modeling",
+      "tier": "L2",
+      "role": "modeler",
+      "difficulty": 3,
+      "confidentiality": 1,
+      "deps": ["mech-analysis", "flow-design"],
+      "resources": ["solidworks:assembly"],
+      "priority": 5,
+      "acceptance": {
+        "minChars": 400,
+        "mustContain": ["装配", "约束", "SolidWorks"],
+        "artifacts": ["assembly-plan.md"]
+      }
+    },
+    {
+      "id": "solidworks-drawing",
+      "title": "工程图索引与版本记录",
+      "brief": "整理工程图索引、图号、版本和变更记录。必须在上一个 SolidWorks 写节点释放锁之后执行。",
+      "group": "三维建模",
+      "kind": "doc",
+      "tier": "L2",
+      "role": "documenter",
+      "difficulty": 2,
+      "confidentiality": 1,
+      "deps": ["solidworks-assembly"],
+      "resources": ["solidworks:assembly"],
+      "priority": 4,
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["工程图", "版本"],
+        "artifacts": ["drawing-index.md"]
+      }
+    },
+    {
+      "id": "fea-check",
+      "title": "载荷与边界条件复核",
+      "brief": "复核总装建模计划中的载荷、约束和边界条件，给出是否具备进入详细 FEA 的条件。未见数据必须标为未知。",
+      "group": "机械结构",
+      "kind": "analysis",
+      "tier": "L1",
+      "role": "analyst",
+      "difficulty": 4,
+      "confidentiality": 1,
+      "deps": ["mech-analysis", "solidworks-assembly"],
+      "priority": 5,
+      "acceptance": {
+        "minChars": 400,
+        "mustContain": ["载荷", "边界条件", "结论"],
+        "artifacts": ["fea.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "deck",
+      "title": "成果汇报材料",
+      "brief": "整理总装、动作链、四井流路和验证状态的汇报材料。明确区分已完成、模拟、待验证和阻塞项。",
+      "group": "成果展示",
+      "kind": "doc",
+      "tier": "L2",
+      "role": "documenter",
+      "difficulty": 2,
+      "confidentiality": 1,
+      "deps": ["solidworks-drawing", "fea-check", "flow-review", "patent-compare"],
+      "priority": 3,
+      "acceptance": {
+        "minChars": 500,
+        "mustContain": ["总装", "动作链", "四井", "验证"],
+        "artifacts": ["deck.md"]
+      }
+    },
+    {
+      "id": "final-review",
+      "title": "总工程交叉审查",
+      "brief": "对全部成果做独立交叉审查，返回 JSON 结论：score、pass、issues、residual_risks。检查结构一致性、流路隔离、建模状态和未验证项。",
+      "group": "交叉审查",
+      "kind": "review",
+      "tier": "L1",
+      "role": "reviewer",
+      "difficulty": 4,
+      "confidentiality": 1,
+      "deps": ["deck", "fea-check", "flow-review", "solidworks-drawing"],
+      "priority": 2,
+      "acceptance": {
+        "minChars": 100,
+        "artifacts": ["final-review.json"],
+        "jsonKeys": ["score", "pass", "issues"],
+        "requireJsonVerdict": true,
+        "critical": true,
+        "skipModelReview": true
+      }
+    },
+    {
+      "id": "approval",
+      "title": "人工总体验收",
+      "brief": "由人确认是否接受当前成果。模拟输出不得作为工程放行依据。",
+      "group": "验收",
+      "kind": "approval",
+      "tier": "L0",
+      "role": "integrator",
+      "difficulty": 1,
+      "confidentiality": 1,
+      "deps": ["final-review"],
+      "priority": 1,
+      "humanGate": true,
+      "acceptance": {
+        "minChars": 0
+      }
+    }
+  ]
+}

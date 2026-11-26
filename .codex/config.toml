@@ -1,0 +1,2 @@
+[plugins."agentorchestra@agentorchestra-local"]
+enabled = true

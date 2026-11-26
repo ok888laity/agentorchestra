@@ -1,0 +1,39 @@
+{
+  "name": "agentorchestra",
+  "version": "0.1.0",
+  "description": "Cost-aware, verification-driven multi-model orchestration with DAGs, budgets, privacy gates, human gates and resumable state.",
+  "author": {
+    "name": "AgentOrchestra contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "multi-agent",
+    "orchestration",
+    "model-routing",
+    "budget",
+    "mcp",
+    "dag",
+    "codex",
+    "opencode"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "AgentOrchestra",
+    "shortDescription": "Cost-aware, verification-driven multi-model orchestration",
+    "longDescription": "DAG-based multi-model orchestration with free/paid routing, budgets, privacy boundaries, independent review, human gates, resource locks, versioned artifacts and resumable state. Mock output is explicitly simulated and is not engineering evidence.",
+    "developerName": "AgentOrchestra contributors",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Plan this engineering task with AgentOrchestra, then run the ready nodes.",
+      "Check AgentOrchestra acceptance progress, budget and blockers.",
+      "Use AgentOrchestra to split this task across specialist models without losing the acceptance bar."
+    ],
+    "brandColor": "#5DE4D3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "providers": {
+    "opencode": {
+      "enabled": false,
+      "reason": "Plugin default: no billing/privacy confirmed by this user yet."
+    },
+    "opencode-go": {
+      "enabled": false,
+      "reason": "Plugin default: no billing/privacy confirmed by this user yet."
+    },
+    "openai": {
+      "enabled": false,
+      "reason": "Plugin default: paid API is never enabled until the user confirms it."
+    }
+  }
+}

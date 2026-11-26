@@ -1,0 +1,9 @@
+AgentOrchestra/.orchestra/
+AgentOrchestra/workspace/
+AgentOrchestra/artifacts/
+AgentOrchestra/plugin/.orchestra/
+AgentOrchestra/plugin/workspace/
+AgentOrchestra/plugin/artifacts/
+node_modules/
+*.log
+.DS_Store

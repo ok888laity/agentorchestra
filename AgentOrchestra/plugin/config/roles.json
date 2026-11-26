@@ -1,0 +1,40 @@
+{
+  "roles": {
+    "generalist": {
+      "label": "通用执行",
+      "weights": { "reasoning": 0.5, "writing": 0.3, "tools": 0.2 }
+    },
+    "researcher": {
+      "label": "资料检索",
+      "weights": { "research": 0.55, "reasoning": 0.25, "writing": 0.2 }
+    },
+    "coder": {
+      "label": "编码实现",
+      "weights": { "coding": 0.6, "reasoning": 0.2, "tools": 0.2 }
+    },
+    "designer": {
+      "label": "工程设计",
+      "weights": { "design": 0.45, "reasoning": 0.35, "review": 0.2 }
+    },
+    "analyst": {
+      "label": "分析校验",
+      "weights": { "reasoning": 0.45, "review": 0.35, "research": 0.2 }
+    },
+    "reviewer": {
+      "label": "独立审查",
+      "weights": { "review": 0.6, "reasoning": 0.25, "coding": 0.15 }
+    },
+    "documenter": {
+      "label": "文档展示",
+      "weights": { "writing": 0.65, "research": 0.2, "reasoning": 0.15 }
+    },
+    "integrator": {
+      "label": "集成验收",
+      "weights": { "reasoning": 0.4, "review": 0.3, "writing": 0.2, "tools": 0.1 }
+    },
+    "modeler": {
+      "label": "三维建模",
+      "weights": { "coding": 0.4, "tools": 0.35, "design": 0.25 }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "agentorchestra-local",
+  "interface": {
+    "displayName": "AgentOrchestra Local"
+  },
+  "plugins": [
+    {
+      "name": "agentorchestra",
+      "source": {
+        "source": "local",
+        "path": "./AgentOrchestra/plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

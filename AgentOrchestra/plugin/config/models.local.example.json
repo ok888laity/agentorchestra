@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "id": "local/ollama-qwen",
+      "provider": "openai",
+      "remoteModel": "qwen2.5-coder:14b",
+      "label": "Local Ollama Qwen",
+      "costClass": "local",
+      "privacy": "local",
+      "available": true,
+      "contextTokens": 32000,
+      "inputCostCnyPerMTok": 0,
+      "outputCostCnyPerMTok": 0,
+      "latencyMs": 1200,
+      "capabilities": {
+        "reasoning": 65,
+        "coding": 78,
+        "research": 45,
+        "writing": 55,
+        "design": 45,
+        "review": 55,
+        "tools": 50,
+        "multimodal": 0,
+        "speed": 35
+      }
+    }
+  ]
+}

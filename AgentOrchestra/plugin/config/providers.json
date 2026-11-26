@@ -1,0 +1,56 @@
+{
+  "providers": {
+    "mock": {
+      "type": "mock",
+      "note": "Deterministic simulation. Never counts as real engineering evidence."
+    },
+    "mock-audit": {
+      "type": "mock",
+      "note": "Separate provider identity so cross-provider review can be exercised offline."
+    },
+    "opencode": {
+      "type": "cli",
+      "command": "opencode",
+      "args": [
+        "run",
+        "--model",
+        "{model}",
+        "Work in {cwd}. Read TASK.md and complete it. Do not ask questions. Write every required artifact in the current directory, then print a concise summary."
+      ],
+      "modelsCommand": ["opencode", "models"],
+      "timeoutMinutes": 25,
+      "verified": false,
+      "note": "Verify flags against your installed OpenCode version before relying on this adapter."
+    },
+    "codex": {
+      "type": "cli",
+      "command": "codex",
+      "args": [
+        "exec",
+        "--model",
+        "{model}",
+        "--cd",
+        "{cwd}",
+        "Read TASK.md and complete it. Do not ask questions. Write every required artifact in the current directory, then print a concise summary."
+      ],
+      "timeoutMinutes": 25,
+      "verified": false,
+      "note": "Verify flags against your installed Codex CLI version before relying on this adapter."
+    },
+    "openai": {
+      "type": "openai",
+      "baseURL": "${AGENTORCHESTRA_OPENAI_BASE_URL}",
+      "apiKeyEnv": "AGENTORCHESTRA_OPENAI_API_KEY",
+      "timeoutMinutes": 10,
+      "requiresKey": true,
+      "note": "Any OpenAI-compatible endpoint: OpenRouter, DeepSeek, vLLM, Ollama, etc."
+    },
+    "host-opencode": {
+      "type": "host-http",
+      "endpointEnv": "AGENTORCHESTRA_HOST_ENDPOINT",
+      "tokenEnv": "AGENTORCHESTRA_HOST_TOKEN",
+      "timeoutMinutes": 10,
+      "note": "Loopback bridge started by the OpenCode plugin; executes the user's already-authenticated host models without extra API billing."
+    }
+  }
+}

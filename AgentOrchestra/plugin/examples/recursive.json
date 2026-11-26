@@ -1,0 +1,93 @@
+{
+  "project": "recursive-demo",
+  "description": "A small DAG that expands one design node into two child nodes plus an integration node at runtime.",
+  "policy": {
+    "qualityPreference": 35,
+    "apiBudgetCny": 0,
+    "zeroExtraPaid": true,
+    "maxConcurrency": 3,
+    "maxDepth": 2,
+    "maxChildren": 4,
+    "reviewMode": "off"
+  },
+  "tasks": [
+    {
+      "id": "requirements",
+      "title": "Requirements",
+      "brief": "State the requirements and acceptance criteria for a small mechanism.",
+      "group": "Planning",
+      "kind": "research",
+      "tier": "L2",
+      "role": "researcher",
+      "difficulty": 2,
+      "deps": [],
+      "acceptance": {
+        "minChars": 250,
+        "mustContain": ["requirement", "acceptance"],
+        "artifacts": ["requirements.md"]
+      }
+    },
+    {
+      "id": "mechanism",
+      "title": "Mechanism design (auto-decomposes)",
+      "brief": "Design a latch and an interlock. The orchestrator should split this into two child nodes and one integration node.",
+      "group": "Design",
+      "kind": "design",
+      "tier": "L1",
+      "role": "designer",
+      "difficulty": 3,
+      "confidentiality": 1,
+      "deps": ["requirements"],
+      "autoDecompose": true,
+      "decomposeInto": [
+        {
+          "id": "mechanism-latch",
+          "title": "Latch design",
+          "brief": "Design the latch and its release path.",
+          "kind": "design",
+          "role": "designer",
+          "difficulty": 3,
+          "acceptance": {
+            "minChars": 300,
+            "mustContain": ["latch", "release"],
+            "artifacts": ["latch.md"]
+          }
+        },
+        {
+          "id": "mechanism-interlock",
+          "title": "Interlock design",
+          "brief": "Design the anti-load-release interlock.",
+          "kind": "design",
+          "role": "designer",
+          "difficulty": 3,
+          "acceptance": {
+            "minChars": 300,
+            "mustContain": ["interlock", "load"],
+            "artifacts": ["interlock.md"]
+          }
+        }
+      ],
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["latch", "interlock", "integration"],
+        "artifacts": ["mechanism.md"]
+      }
+    },
+    {
+      "id": "final-note",
+      "title": "Final note",
+      "brief": "Summarize the integrated mechanism design and residual risks.",
+      "group": "Integration",
+      "kind": "integration",
+      "tier": "L1",
+      "role": "integrator",
+      "difficulty": 2,
+      "deps": ["mechanism"],
+      "acceptance": {
+        "minChars": 250,
+        "mustContain": ["integration", "risk"],
+        "artifacts": ["final.md"]
+      }
+    }
+  ]
+}

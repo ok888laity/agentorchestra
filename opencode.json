@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    {
+      "package": "./AgentOrchestra/plugin",
+      "options": {
+        "root": "./AgentOrchestra",
+        "hostBilling": "unknown",
+        "hostPrivacy": "unknown",
+        "hostExecutor": "opencode",
+        "build": "pool-v11"
+      }
+    }
+  ],
+  "permissions": [
+    { "action": "agentorchestra_*", "resource": "*", "effect": "allow" }
+  ]
+}

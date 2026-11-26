@@ -1,0 +1,168 @@
+{
+  "project": "starter-delivery",
+  "description": "Generic delivery DAG: research -> design -> implement -> audit/script -> docs -> integrate -> human gate.",
+  "policy": {
+    "qualityPreference": 45,
+    "apiBudgetCny": 0,
+    "zeroExtraPaid": true,
+    "maxConcurrency": 3,
+    "maxDepth": 2,
+    "reviewMode": "critical"
+  },
+  "tasks": [
+    {
+      "id": "brief",
+      "title": "Clarify scope and constraints",
+      "brief": "Turn the request into a concise scope, explicit non-goals, constraints, and acceptance criteria. Separate facts from assumptions.",
+      "group": "规划",
+      "kind": "research",
+      "tier": "L2",
+      "role": "researcher",
+      "difficulty": 2,
+      "confidentiality": 0,
+      "deps": [],
+      "priority": 10,
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["目标", "范围", "验收"],
+        "artifacts": ["brief.md"],
+        "requireEvidence": true
+      }
+    },
+    {
+      "id": "design",
+      "title": "Produce the implementation design",
+      "brief": "Design a small, testable implementation. Include interfaces, failure modes, and why the design is the simplest option that meets the acceptance criteria.",
+      "group": "设计",
+      "kind": "design",
+      "tier": "L1",
+      "role": "designer",
+      "difficulty": 4,
+      "confidentiality": 0,
+      "deps": ["brief"],
+      "priority": 9,
+      "acceptance": {
+        "minChars": 400,
+        "mustContain": ["接口", "失败", "风险"],
+        "artifacts": ["design.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "implement",
+      "title": "Implement the deliverable",
+      "brief": "Implement the design. Provide a runnable code artifact and a short evidence section describing what was actually executed versus what was not.",
+      "group": "实现",
+      "kind": "code",
+      "tier": "L2",
+      "role": "coder",
+      "difficulty": 3,
+      "confidentiality": 0,
+      "deps": ["design"],
+      "priority": 8,
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["function"],
+        "artifacts": ["implementation.js"],
+        "requireCodeBlock": true,
+        "requireEvidence": true
+      }
+    },
+    {
+      "id": "audit",
+      "title": "Independent review",
+      "brief": "Review the implementation against the brief and design. Return a JSON verdict with score, pass, issues, and residual risks. Do not rewrite the implementation.",
+      "group": "审查",
+      "kind": "review",
+      "tier": "L1",
+      "role": "reviewer",
+      "difficulty": 3,
+      "confidentiality": 0,
+      "deps": ["implement"],
+      "priority": 7,
+      "acceptance": {
+        "minChars": 80,
+        "artifacts": ["review.json"],
+        "jsonKeys": ["score", "pass", "issues"],
+        "requireJsonVerdict": true,
+        "critical": true,
+        "skipModelReview": true
+      }
+    },
+    {
+      "id": "script-check",
+      "title": "Run deterministic workspace check",
+      "brief": "Execute the deterministic check and record the result. This node does not use a model.",
+      "group": "验证",
+      "kind": "script",
+      "tier": "L2",
+      "role": "integrator",
+      "difficulty": 1,
+      "deps": ["implement"],
+      "priority": 7,
+      "command": ["node", "{root}/scripts/demo-check.js"],
+      "acceptance": {
+        "minChars": 20,
+        "mustContain": ["ok"],
+        "artifacts": ["check.json"],
+        "jsonKeys": ["status", "checkedAt"]
+      }
+    },
+    {
+      "id": "docs",
+      "title": "Write operator documentation",
+      "brief": "Document usage, limitations, and the exact commands a human should run. Do not claim verification that did not happen.",
+      "group": "展示",
+      "kind": "doc",
+      "tier": "L2",
+      "role": "documenter",
+      "difficulty": 2,
+      "confidentiality": 0,
+      "deps": ["design", "implement"],
+      "priority": 5,
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["使用", "限制"],
+        "artifacts": ["README.md"]
+      }
+    },
+    {
+      "id": "integrate",
+      "title": "Integrate and state residual risk",
+      "brief": "Combine the accepted outputs into one integration note. List what passed, what is still unverified, and the exact next actions. Do not hide gaps.",
+      "group": "集成",
+      "kind": "integration",
+      "tier": "L1",
+      "role": "integrator",
+      "difficulty": 3,
+      "confidentiality": 0,
+      "deps": ["audit", "script-check", "docs"],
+      "priority": 3,
+      "acceptance": {
+        "minChars": 300,
+        "mustContain": ["验收", "遗留问题"],
+        "artifacts": ["integration.md"],
+        "requireEvidence": true,
+        "critical": true
+      }
+    },
+    {
+      "id": "approval",
+      "title": "Human acceptance gate",
+      "brief": "A human must review the integration note and decide whether the delivery is accepted. The orchestrator must not self-approve this node.",
+      "group": "验收",
+      "kind": "approval",
+      "tier": "L0",
+      "role": "integrator",
+      "difficulty": 1,
+      "confidentiality": 0,
+      "deps": ["integrate"],
+      "priority": 1,
+      "humanGate": true,
+      "acceptance": {
+        "minChars": 0
+      }
+    }
+  ]
+}
