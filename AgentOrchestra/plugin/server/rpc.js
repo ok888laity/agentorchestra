@@ -7,11 +7,19 @@ const text = {
   additionalProperties: false
 };
 
+// OpenCode 2.4.2's RPC validator assumes every method has an input schema.
+// An omitted input becomes `undefined` and fails with `"~standard" in undefined`.
+const none = {
+  type: "object",
+  properties: {},
+  additionalProperties: false
+};
+
 export const Orchestra = Rpc.define({
   id: "agentorchestra",
   methods: {
-    status: { output: text },
-    classify: { output: text },
+    status: { input: none, output: text },
+    classify: { input: none, output: text },
     confirmProvider: {
       input: {
         type: "object",
@@ -26,7 +34,7 @@ export const Orchestra = Rpc.define({
       },
       output: text
     },
-    examples: { output: text },
+    examples: { input: none, output: text },
     submitPlan: {
       input: {
         type: "object",
@@ -36,7 +44,7 @@ export const Orchestra = Rpc.define({
       },
       output: text
     },
-    pool: { output: text },
+    pool: { input: none, output: text },
     routePreview: {
       input: {
         type: "object",
@@ -46,6 +54,8 @@ export const Orchestra = Rpc.define({
       },
       output: text
     },
-    run: { output: text }
+    run: { input: none, output: text },
+    checkUpdate: { input: none, output: text },
+    update: { input: none, output: text }
   }
 });

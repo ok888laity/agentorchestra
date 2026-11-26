@@ -15,6 +15,7 @@ import { Orchestra } from "./server/rpc.js";
 import { routeTask, routePreviewText } from "./server/router.js";
 import { Scheduler } from "./server/scheduler.js";
 import { Store } from "./server/store.js";
+import { checkForUpdate, runUpdate, updateSummaryText } from "./server/update.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const launcher = path.join(here, "server", "launch-mcp.js");
@@ -202,7 +203,9 @@ export default Plugin.define({
           run: async () => {
             const result = await scheduler.run({ maxSteps: 80 });
             return { text: "运行结束：" + result.stopReason + " · " + (result.progress ?? 0) + "% 接受" };
-          }
+          },
+          checkUpdate: async () => ({ text: updateSummaryText(await checkForUpdate(stateRoot)) }),
+          update: async () => ({ text: runUpdate() })
         }));
       } catch (error) {
         console.error("[agentorchestra] RPC registration failed:", error.message);
@@ -313,6 +316,21 @@ export default Plugin.define({
       } catch (error) {
         console.error("[agentorchestra] command registration failed:", error.message);
       }
+    }
+
+    try {
+      void checkForUpdate(stateRoot).then((result) => {
+        if (result.status === "update-available") console.log("[agentorchestra] " + updateSummaryText(result));
+      });
+      const updateTimer = setInterval(() => {
+        void checkForUpdate(stateRoot).then((result) => {
+          if (result.status === "update-available") console.log("[agentorchestra] " + updateSummaryText(result));
+        });
+      }, 24 * 60 * 60 * 1000);
+      updateTimer.unref?.();
+      registrations.push({ dispose: () => clearInterval(updateTimer) });
+    } catch (error) {
+      console.error("[agentorchestra] update check failed:", error.message);
     }
 
     return async () => {

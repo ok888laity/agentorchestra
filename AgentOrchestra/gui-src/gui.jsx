@@ -9,6 +9,7 @@ const i18n = {
     "pill.setup": "Confirm model boundaries",
     "pill.plan": "Submit a DAG plan",
     "pill.run": "Run ready tasks",
+    "pill.update": "Check for updates",
     "menu.open": "AgentOrchestra console",
     "command.open": "Open AgentOrchestra console",
     "panel.title": "AgentOrchestra"
@@ -19,6 +20,7 @@ const i18n = {
     "pill.setup": "确认模型边界",
     "pill.plan": "提交 DAG 计划",
     "pill.run": "运行待办任务",
+    "pill.update": "检查更新",
     "menu.open": "AgentOrchestra 控制台",
     "command.open": "打开 AgentOrchestra 控制台",
     "panel.title": "AgentOrchestra"
@@ -81,6 +83,8 @@ function Console(props) {
       <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
         <button disabled={busy()} onClick={refresh}>重新检测</button>
         <button disabled={busy()} onClick={() => call("run", {})}>运行待办</button>
+        <button disabled={busy()} onClick={() => call("checkUpdate", {})}>检查更新</button>
+        <button disabled={busy()} onClick={() => call("update", {})}>立即更新</button>
       </div>
 
       <h3 style={{ margin: "4px 0" }}>首次设置 · Provider 计费 / 隐私</h3>
@@ -158,7 +162,8 @@ export default Plugin.define({
         rows: [
           { id: "setup", label: ctx.t("pill.setup"), run: open },
           { id: "plan", label: ctx.t("pill.plan"), run: open },
-          { id: "run", label: ctx.t("pill.run"), run: () => void rpc().run({}) }
+          { id: "run", label: ctx.t("pill.run"), run: () => void rpc().run({}) },
+          { id: "update", label: ctx.t("pill.update"), run: () => void rpc().checkUpdate({}) }
         ]
       })
     });
