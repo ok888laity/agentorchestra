@@ -33,7 +33,7 @@ The main model stays responsible for L0 decisions: understanding the request, ar
 If AgentOrchestra is installed as a plugin, prefer the host integration:
 
 - **OpenCode**: the plugin auto-registers the `agentorchestra` MCP server, the skill, `/orchestra-status`, `/orchestra-run` and `/orchestra-models`. It refreshes the host model catalogue on setup and before each prompt.
-- **Codex**: install the bundle from `.agents/plugins/marketplace.json`; use the bundled MCP tools, the `agentorchestra` skill and `orchestra_sync_models` for host models. Codex does not expose a stable subscription model-list API to plugins.
+- **Codex**: install the bundle from `.agents/plugins/marketplace.json`; use the bundled MCP tools, the `agentorchestra` skill and `orchestra_sync_models` for host models. Codex does not expose a stable subscription model-list API to plugins. Codex has no GUI plugin API, so there are no in-app buttons or slash commands here; interact with the MCP tools by asking in plain language (see "Codex interaction" below).
 
 **First-run provider choices:** future users must run `orchestra_classify_host_models` / `/orchestra-models`, review evidence and confidence, then confirm each provider with `orchestra_set_provider_policy`. Confirmed choices are written to the user's `.orchestra/host-policy.json`. The plugin's shipped `config/host-policy.json` is intentionally neutral/disabled; never bake one user's billing or privacy choice into the plugin defaults.
 - **Standalone**: run the CLI from `AgentOrchestra/` as shown below.
@@ -238,6 +238,24 @@ If OpenCode/Codex is connected to the local MCP server, prefer tools over shell 
 - `orchestra_set_provider_policy`
 
 The plugin bundles the stdio server at `server/launch-mcp.js`. Codex loads it through `mcp.json` / `.mcp.json`; OpenCode registers it through `opencode-server.js`.
+
+## Codex interaction (no buttons, no slash commands)
+
+Codex has no GUI plugin surface, so AgentOrchestra is driven by the MCP tools. The user can just say one of these plain phrases; map it to the tool and call it. Do not tell the user to click a button or run `/orchestra-*` — those only exist in OpenCode.
+
+| User says | Call |
+| --- | --- |
+| 检查状态 / check status / progress | `orchestra_status` |
+| 检查模型边界 / classify providers | `orchestra_classify_host_models` |
+| 确认 provider 计费隐私 | `orchestra_set_provider_policy` |
+| 提交计划 / load a plan / submit DAG | `orchestra_submit` |
+| 预览某任务的模型 | `orchestra_route_preview` |
+| 规划模型池 / pool slots | `orchestra_plan_pool` (or `orchestra_status`) |
+| 运行 / run ready tasks | `orchestra_run` |
+| 审批 / approve | `orchestra_approve` |
+| 检查更新 / check updates | Ask the assistant to check GitHub for a newer commit, or run `orchestra_doctor` |
+
+In Codex there is no in-app panel and no web console. If the user asks for a button, explain the platform limit and offer the plain-language command above.
 
 ## What not to do
 
