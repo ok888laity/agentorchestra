@@ -178,13 +178,36 @@ export function confirmHostModels(root, { billing, privacy, executor = null, sou
   if (!privacy || !["local", "trusted", "public"].includes(privacy)) {
     throw new Error("privacy must be confirmed as local, trusted or public");
   }
-  return syncHostModels(root, {
+  const synced = syncHostModels(root, {
     models: existing.models,
     source: source ?? existing.source ?? "host",
     billing,
     privacy,
     executor: executor ?? existing.executor ?? "opencode"
   });
+
+  // Persist the confirmation to the user policy so the classifier stops asking.
+  // classifyHostModels reads .orchestra/host-policy.json, not host-models.json.
+  const providers = [...new Set(existing.models.map((m) => m.hostProviderID ?? m.providerID ?? String(m.remoteModel ?? "").split("/")[0]).filter(Boolean))];
+  const policyFile = path.join(root, ".orchestra", "host-policy.json");
+  let policy = { providers: {} };
+  try {
+    if (fs.existsSync(policyFile)) policy = JSON.parse(fs.readFileSync(policyFile, "utf8"));
+  } catch { policy = { providers: {} }; }
+  policy.providers = policy.providers ?? {};
+  for (const provider of providers) {
+    policy.providers[provider] = {
+      ...(policy.providers[provider] ?? {}),
+      enabled: true,
+      billing,
+      privacy,
+      userChoice: true,
+      reason: "Confirmed via confirmHostModels"
+    };
+  }
+  fs.mkdirSync(path.dirname(policyFile), { recursive: true });
+  fs.writeFileSync(policyFile, `${JSON.stringify(policy, null, 2)}\n`, "utf8");
+  return synced;
 }
 
 export function readHostModels(root) {
