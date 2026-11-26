@@ -6,10 +6,10 @@ const i18n = {
   en: {
     "pill.label": "AgentOrchestra",
     "pill.title": "Open the AgentOrchestra console inside this window",
-    "pill.setup": "Confirm model boundaries",
-    "pill.plan": "Submit a DAG plan",
-    "pill.run": "Run ready tasks",
-    "pill.update": "Check for updates",
+    "pill.setup": "Boundaries",
+    "pill.plan": "Submit",
+    "pill.run": "Run",
+    "pill.update": "Updates",
     "menu.open": "AgentOrchestra console",
     "command.open": "Open AgentOrchestra console",
     "panel.title": "AgentOrchestra"
@@ -17,10 +17,10 @@ const i18n = {
   zh: {
     "pill.label": "AgentOrchestra",
     "pill.title": "在软件内打开 AgentOrchestra 控制台",
-    "pill.setup": "确认模型边界",
-    "pill.plan": "提交 DAG 计划",
-    "pill.run": "运行待办任务",
-    "pill.update": "检查更新",
+    "pill.setup": "设边界",
+    "pill.plan": "提交计划",
+    "pill.run": "运行",
+    "pill.update": "查更新",
     "menu.open": "AgentOrchestra 控制台",
     "command.open": "打开 AgentOrchestra 控制台",
     "panel.title": "AgentOrchestra"
@@ -81,10 +81,10 @@ function Console(props) {
   return (
     <div style={{ padding: "12px", "font-size": "13px", display: "flex", "flex-direction": "column", gap: "10px", height: "100%", overflow: "auto" }}>
       <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
-        <button disabled={busy()} onClick={refresh}>重新检测</button>
-        <button disabled={busy()} onClick={() => call("run", {})}>运行待办</button>
-        <button disabled={busy()} onClick={() => call("checkUpdate", {})}>检查更新</button>
-        <button disabled={busy()} onClick={() => call("update", {})}>立即更新</button>
+        <button disabled={busy()} onClick={refresh}>检测</button>
+        <button disabled={busy()} onClick={() => call("run", {})}>运行</button>
+        <button disabled={busy()} onClick={() => call("checkUpdate", {})}>查更新</button>
+        <button disabled={busy()} onClick={() => call("update", {})}>更新</button>
       </div>
 
       <h3 style={{ margin: "4px 0" }}>首次设置 · Provider 计费 / 隐私</h3>
@@ -101,7 +101,7 @@ function Console(props) {
               setBilling(group.currentPolicy?.billing ?? group.billing.suggested);
               setPrivacy(group.currentPolicy?.privacy ?? "unknown");
               setEnabled(Boolean(group.currentPolicy?.enabled));
-            }}>选择</button>
+            }}>选</button>
           </div>
         )}</For>
       </div>
@@ -119,24 +119,24 @@ function Console(props) {
         <label><input type="checkbox" checked={enabled()} onChange={(event) => setEnabled(event.currentTarget.checked)} /> 启用</label>
         <button disabled={busy() || !provider()} onClick={() => call("confirmProvider", {
           provider: provider(), billing: billing(), privacy: privacy(), enabled: enabled()
-        }, refresh)}>确认此 provider</button>
+        }, refresh)}>确认</button>
       </div>
 
       <h3 style={{ margin: "4px 0" }}>计划工作台</h3>
       <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
-        <For each={examples()}>{(example) => <button onClick={() => setPlan(example.content)}>载入 {example.name}</button>}</For>
+        <For each={examples()}>{(example) => <button onClick={() => setPlan(example.content)}>{example.name.replace(".json", "")}</button>}</For>
       </div>
       <textarea value={plan()} onInput={(event) => setPlan(event.currentTarget.value)} rows="6" placeholder="粘贴 DAG 计划 JSON" />
       <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
-        <button disabled={busy() || !plan()} onClick={() => call("submitPlan", { plan: plan() }, refresh)}>提交 DAG 计划</button>
-        <button disabled={busy()} onClick={() => call("pool", {})}>规划模型池</button>
+        <button disabled={busy() || !plan()} onClick={() => call("submitPlan", { plan: plan() }, refresh)}>提交</button>
+        <button disabled={busy()} onClick={() => call("pool", {})}>规划</button>
       </div>
       <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap", "align-items": "center" }}>
         <select value={taskId()} onChange={(event) => setTaskId(event.currentTarget.value)}>
           <option value="">选择任务</option>
           <For each={tasks()}>{(id) => <option value={id}>{id}</option>}</For>
         </select>
-        <button disabled={busy() || !taskId()} onClick={() => call("routePreview", { taskId: taskId() })}>预览路由</button>
+        <button disabled={busy() || !taskId()} onClick={() => call("routePreview", { taskId: taskId() })}>预览</button>
       </div>
       <pre style={{ "white-space": "pre-wrap", background: "var(--muted, #111)", padding: "8px", "border-radius": "8px", margin: 0 }}>{output()}</pre>
     </div>
