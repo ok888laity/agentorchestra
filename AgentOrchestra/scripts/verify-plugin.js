@@ -70,7 +70,7 @@ check("bundled skill", () => {
   assert.match(text, /server\/launch-mcp\.js/);
 });
 check("bundled core", () => {
-  for (const file of ["server/mcp.js", "server/cli-plugin.js", "server/launch-mcp.js", "server/scheduler.js", "server/pool.js", "server/host-models.js", "server/classify.js", "server/sync-codex-host.js", "server/providers/host-http.js", "hooks/hooks.json", "config/models.json", "config/providers.json", "config/host-policy.json", "examples/starter.json"]) {
+  for (const file of ["server/mcp.js", "server/cli-plugin.js", "server/launch-mcp.js", "server/scheduler.js", "server/pool.js", "server/host-models.js", "server/classify.js", "server/sync-codex-host.js", "server/providers/host-http.js", "hooks/hooks.json", "scripts/install.js", "config/models.json", "config/providers.json", "config/host-policy.json", "examples/starter.json"]) {
     assert.ok(fs.existsSync(path.join(plugin, file)), `missing ${file}`);
   }
   const mcp = fs.readFileSync(path.join(plugin, "server", "mcp.js"), "utf8");
@@ -95,6 +95,7 @@ check("plugin bundle is fresh", () => {
     ["src/pool.js", "server/pool.js"],
     ["src/host-models.js", "server/host-models.js"],
     ["src/classify.js", "server/classify.js"],
+    ["scripts/install.js", "scripts/install.js"],
     ["src/mcp.js", "server/mcp.js"],
     ["src/cli.js", "server/cli.js"],
     ["src/providers/host-http.js", "server/providers/host-http.js"],

@@ -25,6 +25,7 @@ copyDir(path.join(root, "examples"), path.join(target, "examples"));
 copyDir(path.join(root, "docs"), path.join(target, "docs"));
 fs.mkdirSync(path.join(target, "scripts"), { recursive: true });
 fs.copyFileSync(path.join(root, "scripts", "demo-check.js"), path.join(target, "scripts", "demo-check.js"));
+fs.copyFileSync(path.join(root, "scripts", "install.js"), path.join(target, "scripts", "install.js"));
 fs.copyFileSync(path.join(root, "LICENSE"), path.join(target, "LICENSE"));
 
 let skill = fs.readFileSync(path.join(root, "SKILL.md"), "utf8");
