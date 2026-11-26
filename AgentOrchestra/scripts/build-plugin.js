@@ -398,7 +398,7 @@ export default Plugin.define({
           examples: async () => {
             const dir = path.join(here, "examples");
             const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
-            return { text: files.map((file) => file + "\n" + fs.readFileSync(path.join(dir, file), "utf8")).join("\n---\n") };
+            return { text: files.map((file) => file + "\\n" + fs.readFileSync(path.join(dir, file), "utf8")).join("\\n---\\n") };
           },
           submitPlan: async (input) => {
             const plan = planFromObject(JSON.parse(String(input.plan)), config.policyDefaults);

@@ -5,6 +5,6 @@ plugin/.orchestra/
 plugin/workspace/
 plugin/artifacts/
 node_modules/
-dist/
-gui-experimental.cjs
+/dist/
+/gui-experimental.cjs
 *.log

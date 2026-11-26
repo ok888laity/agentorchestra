@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -86,6 +86,11 @@ check("shipped provider defaults are neutral", () => {
   for (const rule of Object.values(policy.providers ?? {})) {
     assert.equal(rule.enabled, false, "plugin defaults must not enable any host provider before user confirmation");
   }
+});
+
+check("generated plugin entry parses", () => {
+  const result = spawnSync(process.execPath, ["--check", path.join(plugin, "opencode-server.js")], { encoding: "utf8", windowsHide: true });
+  assert.equal(result.status, 0, (result.stderr ?? "").slice(0, 300));
 });
 
 check("plugin bundle is fresh", () => {
